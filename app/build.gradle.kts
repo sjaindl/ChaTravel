@@ -52,8 +52,23 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.compose.material.icons.extended.android)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.serialization.protobuf)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.logging.napier)
+    implementation(libs.viewmodel.compose)
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.koin.core)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.koin.test)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

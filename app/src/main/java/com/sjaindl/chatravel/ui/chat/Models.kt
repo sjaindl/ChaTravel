@@ -17,7 +17,7 @@ data class User(
 
 @Serializable
 data class Message(
-    val id: String,
+    val id: Long,
     val conversationId: String,
     val sender: User,
     val text: String?,
@@ -33,6 +33,7 @@ data class Conversation(
     val participants: List<User>,
     val lastMessage: Message?,
     val unreadCount: Int,
+    val messages: List<Message>,
 )
 
 object InstantSerializer : KSerializer<Instant> {

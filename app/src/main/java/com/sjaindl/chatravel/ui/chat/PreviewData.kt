@@ -8,7 +8,7 @@ private val Han = User("2", "Han Solo")
 
 fun sampleMessages(): List<Message> = listOf(
     Message(
-        id = "m5",
+        id = 5,
         conversationId = "c1",
         sender = Luke,
         text = "See you at 6?",
@@ -16,7 +16,7 @@ fun sampleMessages(): List<Message> = listOf(
         isMine = false,
     ),
     Message(
-        id = "m6",
+        id = 6,
         conversationId = "c1",
         sender = Me,
         text = "Perfect. I'll bring snacks.",
@@ -33,14 +33,16 @@ fun sampleConversations(): List<Conversation> {
             title = "Project Alpha Centauri",
             participants = listOf(Me, Luke, Han),
             lastMessage = last,
-            unreadCount = 2
+            unreadCount = 2,
+            messages = emptyList()
         ),
         Conversation(
             id = "c2",
             title = null, // fallback to participants
             participants = listOf(Luke),
             lastMessage = last.copy(text = "Let's ship it!"),
-            unreadCount = 0
+            unreadCount = 0,
+            messages = emptyList(),
         )
     )
 }

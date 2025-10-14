@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">ChaTravel</string>
+
+    <string name="errorTitle">An error has occurred</string>
+    <string name="errorDescription">Currently no data can be displayed</string>
+    <string name="retry">Retry</string>
 </resources>
