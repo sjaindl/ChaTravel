@@ -1,0 +1,27 @@
+[versions]
+kotlin = "2.2.0"
+dockerPlugin = "9.4.0"
+kotlinSerialization = "1.9.0"
+kotlinDatetime = "0.7.1"
+kotlinCoroutines = "1.10.2"
+mongo = "4.20.1"
+kmongoCoroutineSerialization = "5.2.1"
+logback = "1.5.18"
+junit = "5.13.4"
+
+[libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinDatetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
+mongo = { module = "de.flapdoodle.embed:de.flapdoodle.embed.mongo", version.ref = "mongo" }
+kmongo-coroutine-serialization = { module = "org.litote.kmongo:kmongo-coroutine-serialization", version.ref = "kmongoCoroutineSerialization" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+
+[bundles]
+
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+docker = { id = "com.bmuschko.docker-java-application", version.ref = "dockerPlugin" }
