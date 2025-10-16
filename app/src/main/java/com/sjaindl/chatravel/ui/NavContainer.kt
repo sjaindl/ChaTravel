@@ -8,20 +8,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.sjaindl.chatravel.AppViewModel
+import com.sjaindl.chatravel.ChatViewModel
 import com.sjaindl.chatravel.ProfileViewModel
 import com.sjaindl.chatravel.ui.chat.ChatHomeScreen
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.detail.ChatDetailScreen
-import com.sjaindl.chatravel.ui.chat.sampleConversations
 import com.sjaindl.chatravel.ui.profile.ProfileEditor
 import kotlinx.serialization.Serializable
 
@@ -40,20 +41,28 @@ sealed class NavScreen: NavKey {
 
 @Composable
 fun NavContainer() {
-    val appViewModel = viewModel {
-        AppViewModel()
+    val context = LocalContext.current
+
+    val chatViewModel = viewModel {
+        ChatViewModel()
     }
 
     val profileViewModel = viewModel {
         ProfileViewModel()
     }
 
-
     val backStack = rememberNavBackStack<NavScreen>(
         NavScreen.Profile
     )
 
-    val contentState = appViewModel.contentState.collectAsStateWithLifecycle()
+    val contentState by chatViewModel.contentState.collectAsStateWithLifecycle()
+    val userState by profileViewModel.userState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(userState) {
+        (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
+            chatViewModel.poll(userId = user.userId, context = context)
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -70,8 +79,6 @@ fun NavContainer() {
                 when (key) {
                     is NavScreen.Profile -> NavEntry(key) {
 
-                        val userState by profileViewModel.userState.collectAsStateWithLifecycle()
-
                         ProfileEditor(
                             userState = userState,
                             onContinue = { username, interests ->
@@ -86,14 +93,14 @@ fun NavContainer() {
 
                     is NavScreen.ChatOverview -> NavEntry(key) {
                         ChatHomeScreen(
-                            conversations = sampleConversations(),
+                            contentState = contentState,
                             onConversationClick = {
                                 backStack.add(
                                     NavScreen.ChatDetail(it)
                                 )
                             },
                             loadUsers = profileViewModel::loadUsers,
-                            startConversation = appViewModel::startConversation,
+                            startConversation = chatViewModel::startConversation,
                             trailingContent = {
                                 IconButton(
                                     onClick = {
@@ -112,14 +119,27 @@ fun NavContainer() {
                     }
 
                     is NavScreen.ChatDetail -> NavEntry(key) {
+                        LaunchedEffect(key) {
+                            chatViewModel.markAsRead(
+                                messageIds = key.conversation.messages.map { it.id },
+                                context = context
+                            )
+                        }
+
+                        val conversation =
+                            (contentState as? ChatViewModel.ContentState.Content)?.conversations?.find { it.id == key.conversation.id }
+
                         ChatDetailScreen(
-                            title = key.conversation.id,
-                            messages = listOf(key.conversation.lastMessage!!),
+                            title = key.conversation.title,
+                            messages = (conversation?.messages ?: key.conversation.messages).asReversed(),
                             onBack = {
                                 backStack.removeLastOrNull()
                             },
                             onSend = {
-                                // TODO: pass to VM
+                                chatViewModel.sendMessage(
+                                    conversationId = key.conversation.id,
+                                    text = it,
+                                )
                             }
                         )
                     }

@@ -46,4 +46,8 @@ class UserApi(
             }
         }.body()
     }
+
+    suspend fun getUsers(): UsersResponse {
+        return client.get("/user").body()
+    }
 }

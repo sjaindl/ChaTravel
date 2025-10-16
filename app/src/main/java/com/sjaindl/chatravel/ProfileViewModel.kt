@@ -69,6 +69,8 @@ class ProfileViewModel: ViewModel(), KoinComponent {
     }
 
     suspend fun loadUsers(interest: Interest): List<UserDto> {
-        return userRepository.getUsers(interest = interest).users
+        return userRepository.getUsers(interest = interest).users.filter {
+            it.userId != userRepository.getCurrentUser()?.userId
+        }
     }
 }

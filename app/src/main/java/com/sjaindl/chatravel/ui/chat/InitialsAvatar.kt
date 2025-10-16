@@ -22,7 +22,7 @@ fun InitialsAvatar(name: String) {
         name.trim()
             .split(" ")
             .filter { it.isNotBlank() }
-            .take(2)
+            .take(1)
             .joinToString("") { it.first().uppercase() }
     }
 

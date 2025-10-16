@@ -1,6 +1,7 @@
 package com.sjaindl.chatravel.data
 
 import kotlinx.serialization.Serializable
+import java.time.Instant
 
 @Serializable
 data class CreateUserRequest(
@@ -34,11 +35,10 @@ data class CreateConversationRequest(
 
 @Serializable
 data class ConversationDto(
-    val id: Long,
+    val conversationId: Long,
+    val firstUserId: Long,
+    val secondUserId: Long,
     val interest: String,
-    val participantUserIds: List<Long> = emptyList(),
-    val lastMessagePreview: String? = null,
-    val updatedAt: String? = null,
 )
 
 @Serializable
@@ -48,18 +48,28 @@ data class ConversationsResponse(
 
 @Serializable
 data class MessageDto(
-    val id: Long,
-    val conversationId: String,
-    val senderId: String,
+    val messageId: Long,
+    val conversationId: Long,
+    val senderId: Long,
     val text: String,
     val createdAt: String, // ISO-8601 instant
-)
+) {
+    companion object {
+        operator fun plus(messages: List<MessageDto>): List<MessageDto> {
+            return messages.sortedByDescending {
+                it.createdAt
+            }
+        }
+
+        val Initial = MessageDto(messageId = 0, conversationId = 0, senderId = 0, text = "Welcome to your new conversation!", createdAt = Instant.ofEpochMilli(0).toString())
+    }
+}
 
 
 @Serializable
 data class CreateMessageRequest(
-    val conversationId: String,
-    val senderId: String,
+    val conversationId: Long,
+    val senderId: Long,
     val text: String,
 )
 

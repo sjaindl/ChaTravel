@@ -5,22 +5,24 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoBuf
 import java.io.InputStream
 import java.io.OutputStream
 
-@OptIn(ExperimentalSerializationApi::class)
-object UserSerializer : Serializer<UserDto> {
-    override val defaultValue: UserDto = UserDto(
-        userId = 0L,
-        name = "",
-        interests = emptyList()
-    )
+@Serializable
+data class ReadMessages(
+    val ids: List<Long>,
+)
 
-    override suspend fun readFrom(input: InputStream): UserDto {
+@OptIn(ExperimentalSerializationApi::class)
+object ReadMessagesSerializer : Serializer<ReadMessages> {
+    override val defaultValue: ReadMessages = ReadMessages(ids = emptyList())
+
+    override suspend fun readFrom(input: InputStream): ReadMessages {
         return try {
             ProtoBuf.decodeFromByteArray(
-                UserDto.serializer(),
+                ReadMessages.serializer(),
                 input.readBytes()
             )
         } catch (e: Exception) {
@@ -29,15 +31,17 @@ object UserSerializer : Serializer<UserDto> {
         }
     }
 
-    override suspend fun writeTo(t: UserDto, output: OutputStream) {
+    override suspend fun writeTo(t: ReadMessages, output: OutputStream) {
         output.write(
-            ProtoBuf.encodeToByteArray(UserDto.serializer(), t)
+            ProtoBuf.encodeToByteArray(ReadMessages.serializer(), t)
         )
     }
 }
 
-val Context.userDataStore: DataStore<UserDto> by dataStore(
-    fileName = "user_prefs.pb",
-    serializer = UserSerializer,
+val Context.readMessagesDataStore: DataStore<ReadMessages> by dataStore(
+    fileName = "read_messages.pb",
+    serializer = ReadMessagesSerializer,
 )
+
+
 

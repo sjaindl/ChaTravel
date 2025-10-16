@@ -28,7 +28,7 @@ fun ConversationRow(
     conversation: Conversation,
     onClick: () -> Unit,
 ) {
-    val title = conversation.title ?: conversation.participants.joinToString(", ") { it.displayName }
+    val title = conversation.title
     val preview = conversation.lastMessage?.text ?: ""
     val time = conversation.lastMessage?.let { timeFormatter.format(it.sentAt) } ?: ""
 

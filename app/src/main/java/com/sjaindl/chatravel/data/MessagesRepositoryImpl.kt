@@ -15,7 +15,7 @@ class MessagesRepositoryImpl(
         return api.getMessages(conversationId, sinceIsoInstant)
     }
 
-    override suspend fun createMessage(body: CreateMessageRequest): MessageDto {
-        return api.createMessage(body)
+    override suspend fun createMessage(body: CreateMessageRequest) {
+        api.createMessage(body)
     }
 }

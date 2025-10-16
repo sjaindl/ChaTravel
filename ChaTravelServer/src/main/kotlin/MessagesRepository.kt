@@ -27,7 +27,7 @@ class MessagesRepository(
 
         val collection = createOrGetCollection<Conversation>(collectionName = CONVERSATION_COLLECTION)
 
-        val id = Random.nextLong()
+        val id = Random.nextLong(from = 0, until = Long.MAX_VALUE)
         val interest = Interest.valueOf(interestValue)
         val conversation = Conversation(conversationId = id, firstUserId = firstUserId, secondUserId = secondUserId, interest = interest)
         collection.insertOne(document = conversation)
@@ -43,7 +43,7 @@ class MessagesRepository(
     ) {
         val collection = createOrGetCollection<Message>(collectionName = MESSAGES_COLLECTION)
         val dateFormatted = DateTimeFormatter.ISO_INSTANT.format(date)
-        val id = Random.nextLong()
+        val id = Random.nextLong(from = 0, until = Long.MAX_VALUE)
         val message = Message(
             messageId = id,
             conversationId = conversationId,

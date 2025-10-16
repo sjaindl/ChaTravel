@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
@@ -41,11 +42,12 @@ class MessagesApi(private val client: HttpClient) {
         return resp.body()
     }
 
-    suspend fun createMessage(body: CreateMessageRequest): MessageDto {
+    suspend fun createMessage(body: CreateMessageRequest): String {
         val resp: HttpResponse = client.post("/message") {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        return resp.body()
+
+        return resp.bodyAsText()
     }
 }

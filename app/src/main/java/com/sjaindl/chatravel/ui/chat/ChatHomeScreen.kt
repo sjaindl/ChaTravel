@@ -29,7 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.sjaindl.chatravel.ChatViewModel.ContentState
 import com.sjaindl.chatravel.data.UserDto
+import com.sjaindl.chatravel.ui.ErrorScreen
+import com.sjaindl.chatravel.ui.LoadingScreen
 import com.sjaindl.chatravel.ui.profile.Interest
 import com.sjaindl.chatravel.ui.theme.ChaTravelTheme
 import kotlinx.coroutines.launch
@@ -37,7 +40,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatHomeScreen(
-    conversations: List<Conversation>,
+    contentState: ContentState,
     onConversationClick: (Conversation) -> Unit,
     modifier: Modifier = Modifier,
     title: String = "Chats",
@@ -128,34 +131,48 @@ fun ChatHomeScreen(
             )
         }
     ) { padding ->
-        if (conversations.isEmpty()) {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No conversations yet",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(conversations, key = { it.id }) { convo ->
-                    ConversationRow(
-                        conversation = convo,
-                        onClick = {
-                            onConversationClick(convo)
+
+        when (contentState) {
+            is ContentState.Content -> {
+                val conversations = contentState.conversations
+
+                if (conversations.isEmpty()) {
+                    Box(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No conversations yet",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(conversations, key = { it.id }) { convo ->
+                            ConversationRow(
+                                conversation = convo,
+                                onClick = {
+                                    onConversationClick(convo)
+                                }
+                            )
                         }
-                    )
+                    }
                 }
+            }
+
+            is ContentState.Error -> {
+                ErrorScreen()
+            }
+            ContentState.Initial, ContentState.Loading -> {
+                LoadingScreen()
             }
         }
     }
@@ -176,7 +193,7 @@ fun NewConversationButton(onClick: () -> Unit) {
 private fun PreviewHome() {
     ChaTravelTheme {
         ChatHomeScreen(
-            conversations = sampleConversations(),
+            contentState = ContentState.Content(sampleConversations()),
             onConversationClick = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },
@@ -190,7 +207,7 @@ private fun PreviewHome() {
 private fun PreviewHomeNoConversations() {
     ChaTravelTheme {
         ChatHomeScreen(
-            conversations = emptyList(),
+            contentState = ContentState.Content(emptyList()),
             onConversationClick = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },

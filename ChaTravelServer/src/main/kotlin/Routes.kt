@@ -37,14 +37,16 @@ fun Route.userRoutes(userRepository: UserRepository) {
             call.respond(status = HttpStatusCode.Created, message = success)
         }
 
-        // Get users by interest
         get {
             val interest = call.request.queryParameters["interest"]
             if (interest == null) {
-                call.respond(HttpStatusCode.BadRequest, "Interest missing")
+                // Get all users
+                val users = userRepository.getUsers()
+                call.respond(UsersResponse(users = users))
                 return@get
             }
 
+            // Get users by interest
             val users = userRepository.getUsersByInterest(interestValue = interest)
             call.respond(UsersResponse(users = users))
         }

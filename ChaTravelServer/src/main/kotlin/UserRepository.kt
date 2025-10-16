@@ -69,6 +69,13 @@ class UserRepository(private val database: CoroutineDatabase) {
         return result
     }
 
+    suspend fun getUsers(): List<User> {
+        val collection = createOrGetCollection<User>(USER_COLLECTION)
+
+        val result = collection.find().toList()
+        return result
+    }
+
     private suspend inline fun<reified T: Any> createOrGetCollection(
         collectionName: String,
     ): CoroutineCollection<T> {

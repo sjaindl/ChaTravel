@@ -1,5 +1,6 @@
 package com.sjaindl.chatravel.ui.chat
 
+import com.sjaindl.chatravel.data.UserDto
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -10,16 +11,10 @@ import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
 
 @Serializable
-data class User(
-    val id: String,
-    val displayName: String,
-)
-
-@Serializable
 data class Message(
     val id: Long,
-    val conversationId: String,
-    val sender: User,
+    val conversationId: Long,
+    val sender: UserDto,
     val text: String?,
     @Serializable(with = InstantSerializer::class)
     val sentAt: Instant,
@@ -28,13 +23,14 @@ data class Message(
 
 @Serializable
 data class Conversation(
-    val id: String,
-    val title: String?,
-    val participants: List<User>,
-    val lastMessage: Message?,
+    val id: Long,
+    val title: String,
+    val participants: List<UserDto>,
     val unreadCount: Int,
     val messages: List<Message>,
-)
+) {
+    val lastMessage: Message? = messages.lastOrNull()
+}
 
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)

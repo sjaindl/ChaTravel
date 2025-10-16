@@ -21,6 +21,7 @@ class UserRepositoryImpl(
                 interests = interests.map { it.name }
             )
         }
+
         return userApi.addUser(userId = userId, name = name, interests = interests.map { it.name })
     }
 
@@ -42,4 +43,9 @@ class UserRepositoryImpl(
     override suspend fun getUsers(interest: Interest): UsersResponse {
         return userApi.getUsersByInterest(interest.name)
     }
+
+    override suspend fun getUsers(): UsersResponse {
+        return userApi.getUsers()
+    }
 }
+
