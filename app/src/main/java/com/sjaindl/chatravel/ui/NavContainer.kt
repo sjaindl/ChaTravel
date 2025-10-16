@@ -58,12 +58,6 @@ fun NavContainer() {
     val contentState by chatViewModel.contentState.collectAsStateWithLifecycle()
     val userState by profileViewModel.userState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(userState) {
-        (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
-            chatViewModel.poll(userId = user.userId, context = context)
-        }
-    }
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -92,6 +86,12 @@ fun NavContainer() {
                     }
 
                     is NavScreen.ChatOverview -> NavEntry(key) {
+                        LaunchedEffect(userState) {
+                            (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
+                                chatViewModel.poll(userId = user.userId, context = context)
+                            }
+                        }
+
                         ChatHomeScreen(
                             contentState = contentState,
                             onConversationClick = {
