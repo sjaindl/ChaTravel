@@ -51,7 +51,7 @@ fun NavContainer() {
         ProfileViewModel()
     }
 
-    val backStack = rememberNavBackStack<NavScreen>(
+    val backStack = rememberNavBackStack(
         NavScreen.Profile
     )
 
