@@ -15,6 +15,13 @@ class MessagesRepositoryImpl(
         return api.getMessages(conversationId, sinceIsoInstant)
     }
 
+    override suspend fun getMessagesLongPolling(
+        conversationId: Long,
+        sinceIsoInstant: String?
+    ): MessagesResponse {
+        return api.getMessagesLongPolling(conversationId, sinceIsoInstant)
+    }
+
     override suspend fun createMessage(body: CreateMessageRequest) {
         api.createMessage(body)
     }

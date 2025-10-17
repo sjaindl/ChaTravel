@@ -73,7 +73,7 @@ fun ChatDetailScreen(
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
             reverseLayout = true // Newest at bottom, start from end
         ) {
-            items(messages, key = { it.id }) { msg ->
+            items(messages) { msg ->
                 MessageBubble(
                     text = msg.text.orEmpty(),
                     time = timeFormatter.format(msg.sentAt),

@@ -4,6 +4,8 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 
 fun Route.generalRoutes() {
@@ -128,6 +130,50 @@ fun Route.messagesRoutes(
 
             val messages = messagesRepository.getMessages(conversationId = conversationId, since = sinceInstant)
             call.respond(MessagesResponse(messages = messages, serverTime = Instant.now().toString()))
+        }
+
+        get("/long") {
+            val since = call.request.queryParameters["since"]
+            val conversationId = call.request.queryParameters["conversationId"]?.toLong()
+            if (conversationId == null) {
+                call.respond(HttpStatusCode.BadRequest, "Conversation ID missing or not a number")
+                return@get
+            }
+
+            val timeoutSeconds = call.request.queryParameters["timeoutSec"]?.toLongOrNull()?.coerceIn(5, 60) ?: 10L
+
+            val sinceInstant = try {
+                since?.let { Instant.parse(it) }
+            } catch (e: Exception) {
+                null
+            }
+
+            // hint to clients about server-held timeout
+            call.response.headers.append("X-Long-Poll-Timeout-Seconds", timeoutSeconds.toString())
+            call.response.headers.append(HttpHeaders.CacheControl, "no-store")
+
+            // Fast path: if we already have newer messages, return immediately
+            val initial = messagesRepository.getMessages(conversationId = conversationId, since = sinceInstant)
+            if (initial.isNotEmpty()) {
+                call.respond(MessagesResponse(messages = initial, serverTime = Instant.now().toString()))
+                return@get
+            }
+
+            // Otherwise wait until a new matching message arrives or timeout
+            val result = withTimeoutOrNull(timeoutSeconds * 1000) {
+                MessageBus.events.first { message ->
+                    message.conversationId == conversationId &&
+                            (sinceInstant == null || Instant.parse(message.createdAt).isAfter(sinceInstant))
+                }
+            }
+
+            if (result != null) {
+                val newMessages = messagesRepository.getMessages(conversationId = conversationId, since = sinceInstant)
+                call.respond(MessagesResponse(messages = newMessages, serverTime = Instant.now().toString()))
+            } else {
+                // Timeout: nothing new - return 200 with empty list (alternative: 204 No Content)
+                call.respond(MessagesResponse(messages = emptyList(), serverTime = Instant.now().toString()))
+            }
         }
 
         // Create message

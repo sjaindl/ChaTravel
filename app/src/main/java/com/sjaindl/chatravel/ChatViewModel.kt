@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sjaindl.chatravel.data.CreateConversationRequest
 import com.sjaindl.chatravel.data.CreateMessageRequest
+import com.sjaindl.chatravel.data.LongPoller
 import com.sjaindl.chatravel.data.MessagesRepository
 import com.sjaindl.chatravel.data.ShortPoller
 import com.sjaindl.chatravel.data.UserDto
@@ -40,6 +41,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
     }
 
     private val shortPoller: ShortPoller by inject<ShortPoller>()
+    private val longPoller: LongPoller by inject<LongPoller>()
 
     private val userRepository: UserRepository by inject<UserRepository>()
     private val messagesRepository: MessagesRepository by inject<MessagesRepository>()
@@ -55,6 +57,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
     override fun onCleared() {
         super.onCleared()
         shortPoller.stop()
+        longPoller.stop()
     }
 
     fun markAsRead(messageIds: List<Long>, context: Context) = viewModelScope.launch {
@@ -114,9 +117,9 @@ class ChatViewModel: ViewModel(), KoinComponent {
         _contentState.value = ContentState.Loading
 
         runCatching {
-            shortPoller.start(userId = userId)
+            longPoller.start(userId = userId)
 
-            shortPoller.messageFlow.collectLatest { messageList ->
+            longPoller.messageFlow.collectLatest { messageList ->
                 val currentUserId = userRepository.getCurrentUser()?.userId ?: return@collectLatest
 
                 val conversations = messagesRepository.getConversations(currentUserId)
@@ -128,9 +131,9 @@ class ChatViewModel: ViewModel(), KoinComponent {
                         conversationId = it.conversationId,
                         sender = UserDto(
                             userId = it.senderId,
-                            name = users.first {
+                            name = users.firstOrNull {
                                     user -> user.userId == it.senderId
-                            }.name
+                            }?.name ?: "Anonymous"
                         ),
                         text = it.text,
                         sentAt = Instant.parse(it.createdAt),
@@ -171,7 +174,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
             if (it is CancellationException) throw it
             Napier.e("Could not poll messages", it)
             _contentState.value = ContentState.Error(it)
-            shortPoller.stop()
+            longPoller.stop()
         }
     }
 }

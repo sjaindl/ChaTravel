@@ -53,6 +53,8 @@ class MessagesRepository(
         )
 
         collection.insertOne(message)
+
+        MessageBus.emitNewMessage(message)
     }
 
     suspend fun getConversations(userId: Long): List<Conversation> {

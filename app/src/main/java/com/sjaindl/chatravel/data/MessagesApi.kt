@@ -21,7 +21,6 @@ class MessagesApi(private val client: HttpClient) {
         return resp.body()
     }
 
-
     suspend fun startConversation(request: CreateConversationRequest): Long {
         val resp: HttpResponse = client.post("/conversation") {
             setBody(request)
@@ -32,6 +31,18 @@ class MessagesApi(private val client: HttpClient) {
 
     suspend fun getMessages(conversationId: Long, sinceIsoInstant: String? = null): MessagesResponse {
         val resp: HttpResponse = client.get("/message") {
+            url {
+                parameters.append("conversationId", conversationId.toString())
+                sinceIsoInstant?.let {
+                    parameters.append("since", it)
+                }
+            }
+        }
+        return resp.body()
+    }
+
+    suspend fun getMessagesLongPolling(conversationId: Long, sinceIsoInstant: String? = null): MessagesResponse {
+        val resp: HttpResponse = client.get("/message/long") {
             url {
                 parameters.append("conversationId", conversationId.toString())
                 sinceIsoInstant?.let {

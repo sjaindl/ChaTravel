@@ -1,5 +1,6 @@
 package com.sjaindl.chatravel.di
 
+import com.sjaindl.chatravel.data.LongPoller
 import com.sjaindl.chatravel.data.MessagesApi
 import com.sjaindl.chatravel.data.MessagesRepository
 import com.sjaindl.chatravel.data.MessagesRepositoryImpl
@@ -67,6 +68,13 @@ val appModule = module {
 
     single<ShortPoller> {
         ShortPoller(
+            messagesRepository = get(),
+            scope = get(),
+        )
+    }
+
+    single<LongPoller> {
+        LongPoller(
             messagesRepository = get(),
             scope = get(),
         )
