@@ -8,10 +8,13 @@ import com.sjaindl.chatravel.data.ShortPoller
 import com.sjaindl.chatravel.data.UserApi
 import com.sjaindl.chatravel.data.UserRepository
 import com.sjaindl.chatravel.data.UserRepositoryImpl
+import com.sjaindl.chatravel.data.WebSocketFetcher
+import com.sjaindl.chatravel.data.WebSocketsMessagesApi
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,9 +52,12 @@ val appModule = module {
                     Json {
                         ignoreUnknownKeys = true
                         encodeDefaults = true
+                        classDiscriminator = "type"
                     }
                 )
             }
+
+            install(WebSockets)
 
             defaultRequest {
                 //url("http://10.0.2.2:8080")
@@ -63,6 +69,8 @@ val appModule = module {
     single<Json> {
         Json {
             ignoreUnknownKeys = true
+            encodeDefaults = true
+            classDiscriminator = "type"
         }
     }
 
@@ -77,6 +85,21 @@ val appModule = module {
         LongPoller(
             messagesRepository = get(),
             scope = get(),
+        )
+    }
+
+    single<WebSocketFetcher> {
+        WebSocketFetcher(
+            messagesRepository = get(),
+            webSocketsMessagesApi = get(),
+            scope = get(),
+        )
+    }
+
+    single<WebSocketsMessagesApi> {
+        WebSocketsMessagesApi(
+            client = get(),
+            json = get(),
         )
     }
 

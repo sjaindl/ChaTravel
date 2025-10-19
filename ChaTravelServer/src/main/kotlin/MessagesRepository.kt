@@ -40,7 +40,7 @@ class MessagesRepository(
         senderId: Long,
         date: Instant,
         message: String,
-    ) {
+    ): Message {
         val collection = createOrGetCollection<Message>(collectionName = MESSAGES_COLLECTION)
         val dateFormatted = DateTimeFormatter.ISO_INSTANT.format(date)
         val id = Random.nextLong(from = 0, until = Long.MAX_VALUE)
@@ -55,6 +55,8 @@ class MessagesRepository(
         collection.insertOne(message)
 
         MessageBus.emitNewMessage(message)
+
+        return message
     }
 
     suspend fun getConversations(userId: Long): List<Conversation> {

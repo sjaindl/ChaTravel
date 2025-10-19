@@ -17,6 +17,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // one of: SHORT_POLL, LONG_POLL, WEBSOCKETS
+        buildConfigField("String", "MESSAGE_NETWORK_TYPE", "\"WEBSOCKETS\"")
     }
 
     buildTypes {
@@ -28,15 +31,19 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -61,6 +68,7 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.koin.core)

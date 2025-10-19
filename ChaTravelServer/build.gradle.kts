@@ -18,6 +18,7 @@ dependencies {
     implementation(ktorLibs.client.apache)
     implementation(ktorLibs.client.encoding)
     implementation(ktorLibs.server.contentNegotiation)
+    implementation(ktorLibs.server.websockets)
     implementation(ktorLibs.server.netty)
     implementation(ktorLibs.server.htmlBuilder)
     implementation(ktorLibs.server.resources)

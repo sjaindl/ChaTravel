@@ -10,6 +10,7 @@ import com.sjaindl.chatravel.data.MessagesRepository
 import com.sjaindl.chatravel.data.ShortPoller
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.data.UserRepository
+import com.sjaindl.chatravel.data.WebSocketFetcher
 import com.sjaindl.chatravel.data.readMessagesDataStore
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.Message
@@ -42,6 +43,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
 
     private val shortPoller: ShortPoller by inject<ShortPoller>()
     private val longPoller: LongPoller by inject<LongPoller>()
+    private val webSocketFetcher: WebSocketFetcher by inject<WebSocketFetcher>()
 
     private val userRepository: UserRepository by inject<UserRepository>()
     private val messagesRepository: MessagesRepository by inject<MessagesRepository>()
@@ -58,6 +60,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
         super.onCleared()
         shortPoller.stop()
         longPoller.stop()
+        webSocketFetcher.stop()
     }
 
     fun markAsRead(messageIds: List<Long>, context: Context) = viewModelScope.launch {
@@ -97,18 +100,27 @@ class ChatViewModel: ViewModel(), KoinComponent {
         val currentUserId = userRepository.getCurrentUser()?.userId ?: return@launch
 
         runCatching {
-            messagesRepository.createMessage(
-                body = CreateMessageRequest(
+
+            when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+                "SHORT_POLL", "LONG_POLL" -> messagesRepository.createMessage(
+                    body = CreateMessageRequest(
+                        conversationId = conversationId,
+                        senderId = currentUserId,
+                        text = text
+                    )
+                )
+                "WEBSOCKETS" -> webSocketFetcher.sendMessage(
                     conversationId = conversationId,
                     senderId = currentUserId,
-                    text = text
+                    text = text,
                 )
-            )
+                else -> throw IllegalStateException("Unknown message network type")
+            }
         }.onSuccess {
             Napier.d("Send message successfully")
         }.onFailure {
             if (it is CancellationException) throw it
-            Napier.e("Could not start conversation", it)
+            Napier.e("Could not send message", it)
             _contentState.value = ContentState.Error(it)
         }
     }
@@ -117,13 +129,31 @@ class ChatViewModel: ViewModel(), KoinComponent {
         _contentState.value = ContentState.Loading
 
         runCatching {
-            longPoller.start(userId = userId)
+            val messageFlow = when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+                "SHORT_POLL" -> {
+                    shortPoller.start(userId = userId)
+                    shortPoller.messageFlow
+                }
+                "LONG_POLL" -> {
+                    longPoller.start(userId = userId)
+                    longPoller.messageFlow
+                }
+                "WEBSOCKETS" -> {
+                    webSocketFetcher.start(userId = userId)
+                    webSocketFetcher.messageFlow
+                }
+                else -> throw IllegalStateException("Unknown message network type")
+            }
 
-            longPoller.messageFlow.collectLatest { messageList ->
+            messageFlow.collectLatest { messageList ->
                 val currentUserId = userRepository.getCurrentUser()?.userId ?: return@collectLatest
 
                 val conversations = messagesRepository.getConversations(currentUserId)
                 val users = userRepository.getUsers().users
+
+                val me = users.first { user ->
+                    user.userId == currentUserId
+                }
 
                 val mapped = messageList.map {
                     Message(
@@ -148,10 +178,6 @@ class ChatViewModel: ViewModel(), KoinComponent {
                         it.key == conversation.conversationId
                     }?.interest
 
-                    val me = users.first { user ->
-                        user.userId == currentUserId
-                    }
-
                     val secondUser = users.first { user ->
                         user.userId == it.value[0].sender.userId
                     }
@@ -174,7 +200,9 @@ class ChatViewModel: ViewModel(), KoinComponent {
             if (it is CancellationException) throw it
             Napier.e("Could not poll messages", it)
             _contentState.value = ContentState.Error(it)
+            shortPoller.stop()
             longPoller.stop()
+            webSocketFetcher.stop()
         }
     }
 }
