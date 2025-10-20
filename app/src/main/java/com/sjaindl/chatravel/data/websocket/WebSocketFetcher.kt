@@ -1,5 +1,7 @@
-package com.sjaindl.chatravel.data
+package com.sjaindl.chatravel.data.websocket
 
+import com.sjaindl.chatravel.data.MessageDto
+import com.sjaindl.chatravel.data.MessagesRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -8,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.plus
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -36,7 +39,7 @@ class WebSocketFetcher(
                             conversations.flatMap { conversation ->
                                 buildList {
                                     add(
-                                        MessageDto.Initial.copy(
+                                        MessageDto.Companion.Initial.copy(
                                             conversationId = conversation.conversationId,
                                             senderId = conversation.secondUserId,
                                         )

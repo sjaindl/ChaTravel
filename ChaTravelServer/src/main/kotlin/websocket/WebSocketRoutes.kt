@@ -1,8 +1,7 @@
-package com.sjaindl.chatravelserver
+package com.sjaindl.chatravelserver.websocket
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.*
-import io.ktor.server.response.*
+import com.sjaindl.chatravelserver.MessageBus
+import com.sjaindl.chatravelserver.MessagesRepository
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -10,9 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap

@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.sjaindl.chatravel.ProfileViewModel.UserState
+import com.sjaindl.chatravel.ui.vm.ProfileViewModel.UserState
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.ui.ErrorScreen
 import com.sjaindl.chatravel.ui.LoadingScreen

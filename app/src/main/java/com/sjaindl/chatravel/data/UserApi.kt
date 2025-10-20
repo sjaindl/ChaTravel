@@ -26,7 +26,7 @@ class UserApi(
         }.body()
     }
 
-    suspend fun updateUser(userId: Long, name: String, interests: List<String>): Boolean {
+    suspend fun updateUser(userId: Long, name: String, interests: List<String>): UserDto {
         val request = CreateUserRequest(
             userId = userId,
             name = name,

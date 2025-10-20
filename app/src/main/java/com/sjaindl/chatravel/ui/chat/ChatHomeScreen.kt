@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.sjaindl.chatravel.ChatViewModel.ContentState
+import com.sjaindl.chatravel.ui.vm.ChatViewModel.ContentState
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.ui.ErrorScreen
 import com.sjaindl.chatravel.ui.LoadingScreen

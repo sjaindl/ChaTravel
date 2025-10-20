@@ -29,7 +29,7 @@ class UserRepositoryImpl(
         userId: Long,
         name: String,
         interests: List<Interest>
-    ): Boolean {
+    ): UserDto {
         context.userDataStore.updateData {
             it.copy(
                 userId = userId,

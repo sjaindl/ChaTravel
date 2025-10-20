@@ -42,7 +42,7 @@ class UserRepository(private val database: CoroutineDatabase) {
     suspend fun updateUserInterests(
         userId: Long,
         interestValues: List<String>,
-    ): Boolean {
+    ): User? {
         val collection = createOrGetCollection<User>(USER_COLLECTION)
         val interests = interestValues.mapNotNull { value ->
             Interest.entries.find {
@@ -56,7 +56,7 @@ class UserRepository(private val database: CoroutineDatabase) {
             collection.updateOne(User::userId.eq(userId), user)
         }
 
-        return user != null
+        return user
     }
 
     suspend fun getUsersByInterest(interestValue: String): List<User> {
@@ -67,6 +67,13 @@ class UserRepository(private val database: CoroutineDatabase) {
 
         val result = collection.find(User::interests contains interest).toList()
         return result
+    }
+
+    suspend fun getUserInterests(userId: Long): List<Interest> {
+        val collection = createOrGetCollection<User>(USER_COLLECTION)
+        val user = collection.findOne(User::userId.eq(userId))
+
+        return user?.interests ?: emptyList()
     }
 
     suspend fun getUsers(): List<User> {

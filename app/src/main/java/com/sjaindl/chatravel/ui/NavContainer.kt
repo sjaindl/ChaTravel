@@ -7,9 +7,12 @@ import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -18,12 +21,14 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.sjaindl.chatravel.ChatViewModel
-import com.sjaindl.chatravel.ProfileViewModel
+import com.sjaindl.chatravel.ui.vm.ChatViewModel
+import com.sjaindl.chatravel.ui.vm.ProfileViewModel
 import com.sjaindl.chatravel.ui.chat.ChatHomeScreen
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.detail.ChatDetailScreen
 import com.sjaindl.chatravel.ui.profile.ProfileEditor
+import com.sjaindl.chatravel.ui.vm.InterestMatchViewModel
+import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -51,16 +56,35 @@ fun NavContainer() {
         ProfileViewModel()
     }
 
+    val interestMatchViewModel = viewModel {
+        InterestMatchViewModel()
+    }
+
     val backStack = rememberNavBackStack(
         NavScreen.Profile
     )
 
+    val snackbar = remember {
+        SnackbarHostState()
+    }
+
     val contentState by chatViewModel.contentState.collectAsStateWithLifecycle()
     val userState by profileViewModel.userState.collectAsStateWithLifecycle()
+    val sseState by interestMatchViewModel.events.collectAsStateWithLifecycle()
+
+    LaunchedEffect(sseState) {
+        Napier.d("Interest match state: $sseState")
+        sseState.lastOrNull()?.let {
+            snackbar.showSnackbar("New user with same interests: ${it.name}")
+        }
+    }
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
+        snackbarHost = {
+            SnackbarHost(snackbar)
+        },
     ) { innerPadding ->
         NavDisplay(
             backStack = backStack,
@@ -88,7 +112,8 @@ fun NavContainer() {
                     is NavScreen.ChatOverview -> NavEntry(key) {
                         LaunchedEffect(userState) {
                             (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
-                                chatViewModel.poll(userId = user.userId, context = context)
+                                chatViewModel.fetchChats(userId = user.userId, context = context)
+                                interestMatchViewModel.start(userId = user.userId)
                             }
                         }
 

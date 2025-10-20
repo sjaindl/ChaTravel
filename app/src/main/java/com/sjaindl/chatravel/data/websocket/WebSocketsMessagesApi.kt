@@ -1,6 +1,7 @@
-package com.sjaindl.chatravel.data
+package com.sjaindl.chatravel.data.websocket
 
 import androidx.core.net.toUri
+import com.sjaindl.chatravel.data.MessageDto
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession

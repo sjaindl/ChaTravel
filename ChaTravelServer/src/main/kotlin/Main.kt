@@ -1,6 +1,8 @@
 package com.sjaindl.chatravelserver
 
 import com.mongodb.MongoClientSettings
+import com.sjaindl.chatravelserver.sse.SSERoutes
+import com.sjaindl.chatravelserver.websocket.websocketMessageRoutes
 import de.flapdoodle.embed.mongo.distribution.Version
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -16,7 +18,6 @@ import io.ktor.server.websocket.timeout
 import org.slf4j.event.Level
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
@@ -65,6 +66,7 @@ fun main() {
             conversationRoutes(messagesRepository = messagesRepository, userRepository = userRepository)
             messagesRoutes(messagesRepository = messagesRepository)
             websocketMessageRoutes(messagesRepository = messagesRepository)
+            SSERoutes(userRepository = userRepository)
         }
     }.start(wait = true)
 }

@@ -1,20 +1,17 @@
-package com.sjaindl.chatravel.data
+package com.sjaindl.chatravel.data.polling
 
+import com.sjaindl.chatravel.data.MessageDto
+import com.sjaindl.chatravel.data.MessagesRepository
 import io.github.aakira.napier.Napier
 import io.ktor.network.sockets.SocketTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -43,7 +40,7 @@ class LongPoller(
                             conversations.flatMap { conversation ->
                                 buildList {
                                     add(
-                                        MessageDto.Initial.copy(
+                                        MessageDto.Companion.Initial.copy(
                                             conversationId = conversation.conversationId,
                                             senderId = conversation.secondUserId,
                                         )

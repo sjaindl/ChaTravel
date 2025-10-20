@@ -1,16 +1,17 @@
-package com.sjaindl.chatravel
+package com.sjaindl.chatravel.ui.vm
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sjaindl.chatravel.BuildConfig
 import com.sjaindl.chatravel.data.CreateConversationRequest
 import com.sjaindl.chatravel.data.CreateMessageRequest
-import com.sjaindl.chatravel.data.LongPoller
+import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.MessagesRepository
-import com.sjaindl.chatravel.data.ShortPoller
+import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.data.UserRepository
-import com.sjaindl.chatravel.data.WebSocketFetcher
+import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.data.readMessagesDataStore
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.Message
@@ -125,7 +126,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
         }
     }
 
-    fun poll(userId: Long, context: Context) = viewModelScope.launch {
+    fun fetchChats(userId: Long, context: Context) = viewModelScope.launch {
         _contentState.value = ContentState.Loading
 
         runCatching {

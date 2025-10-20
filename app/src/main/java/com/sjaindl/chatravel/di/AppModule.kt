@@ -1,15 +1,16 @@
 package com.sjaindl.chatravel.di
 
-import com.sjaindl.chatravel.data.LongPoller
+import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.MessagesApi
 import com.sjaindl.chatravel.data.MessagesRepository
 import com.sjaindl.chatravel.data.MessagesRepositoryImpl
-import com.sjaindl.chatravel.data.ShortPoller
+import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.UserApi
 import com.sjaindl.chatravel.data.UserRepository
 import com.sjaindl.chatravel.data.UserRepositoryImpl
-import com.sjaindl.chatravel.data.WebSocketFetcher
-import com.sjaindl.chatravel.data.WebSocketsMessagesApi
+import com.sjaindl.chatravel.data.sse.InterestMatchSseClient
+import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
+import com.sjaindl.chatravel.data.websocket.WebSocketsMessagesApi
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -100,6 +101,14 @@ val appModule = module {
         WebSocketsMessagesApi(
             client = get(),
             json = get(),
+        )
+    }
+
+    single<InterestMatchSseClient> {
+        InterestMatchSseClient(
+            client = get(),
+            json = get(),
+            scope = get(),
         )
     }
 

@@ -1,5 +1,7 @@
 package com.sjaindl.chatravelserver
 
+import com.sjaindl.chatravelserver.sse.DiscoverableUserEvent
+import com.sjaindl.chatravelserver.sse.InterestMatchBus
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -27,6 +29,15 @@ fun Route.userRoutes(userRepository: UserRepository) {
 
             val user = userRepository.registerUser(userId = body.userId, name = body.name, interestValues = body.interests)
 
+            // Used to send events to users with same interest via SSE
+            InterestMatchBus.emit(
+                DiscoverableUserEvent(
+                    userId = user.userId,
+                    name = user.name,
+                    interests = user.interests
+                )
+            )
+
             call.respond(status = HttpStatusCode.Created, message = user)
         }
 
@@ -34,9 +45,23 @@ fun Route.userRoutes(userRepository: UserRepository) {
         put {
             val body = call.receive<CreateOrUpdateUserRequest>()
 
-            val success = userRepository.updateUserInterests(userId = body.userId, interestValues = body.interests)
+            val user = userRepository.updateUserInterests(userId = body.userId, interestValues = body.interests)
 
-            call.respond(status = HttpStatusCode.Created, message = success)
+            if (user == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "user not existing"))
+                return@put
+            }
+
+            // Used to send events to users with same interest via SSE
+            InterestMatchBus.emit(
+                DiscoverableUserEvent(
+                    userId = body.userId,
+                    name = user.name,
+                    interests = user.interests,
+                )
+            )
+
+            call.respond(status = HttpStatusCode.Created, message = user)
         }
 
         get {

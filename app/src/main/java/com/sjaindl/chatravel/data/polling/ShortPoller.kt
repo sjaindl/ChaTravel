@@ -1,5 +1,7 @@
-package com.sjaindl.chatravel.data
+package com.sjaindl.chatravel.data.polling
 
+import com.sjaindl.chatravel.data.MessageDto
+import com.sjaindl.chatravel.data.MessagesRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +44,7 @@ class ShortPoller(
                             conversations.flatMap { conversation ->
                                 buildList {
                                     add(
-                                        MessageDto.Initial.copy(
+                                        MessageDto.Companion.Initial.copy(
                                             conversationId = conversation.conversationId,
                                             senderId = conversation.secondUserId,
                                         )

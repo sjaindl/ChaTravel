@@ -1,4 +1,4 @@
-package com.sjaindl.chatravel
+package com.sjaindl.chatravel.ui.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,10 +54,8 @@ class ProfileViewModel: ViewModel(), KoinComponent {
         try {
             if (currentUser != null && currentUser != UserDto.Empty) {
                 val user = currentUser.copy(interests = interests.map { it.name })
-                val success = userRepository.updateUser(userId = user.userId, name = userName, interests = interests)
-                if (success) {
-                    _userState.value = UserState.Content(user)
-                }
+                val updatedUser = userRepository.updateUser(userId = user.userId, name = userName, interests = interests)
+                _userState.value = UserState.Content(updatedUser)
             } else {
                 val userId = Random.nextLong(from = 0, until = Long.MAX_VALUE)
                 val user = userRepository.addUser(userId = userId, name = userName, interests = interests)
