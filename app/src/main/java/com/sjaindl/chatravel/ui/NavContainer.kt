@@ -161,7 +161,11 @@ fun NavContainer() {
                             (contentState as? ChatViewModel.ContentState.Content)?.conversations?.find { it.id == key.conversation.id }
                         ChatDetailScreen(
                             title = key.conversation.title,
-                            messages =  syncedMessages + (conversation?.messages ?: key.conversation.messages).asReversed(),
+                            messages =  (syncedMessages + (conversation?.messages ?: key.conversation.messages)).sortedByDescending {
+                                it.sentAt
+                            }.distinctBy {
+                                it.id
+                            },
                             onBack = {
                                 backStack.removeLastOrNull()
                             },
