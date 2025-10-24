@@ -21,13 +21,14 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.sjaindl.chatravel.ui.vm.ChatViewModel
-import com.sjaindl.chatravel.ui.vm.ProfileViewModel
 import com.sjaindl.chatravel.ui.chat.ChatHomeScreen
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.detail.ChatDetailScreen
 import com.sjaindl.chatravel.ui.profile.ProfileEditor
+import com.sjaindl.chatravel.ui.vm.ChatSyncViewModel
+import com.sjaindl.chatravel.ui.vm.ChatViewModel
 import com.sjaindl.chatravel.ui.vm.InterestMatchViewModel
+import com.sjaindl.chatravel.ui.vm.ProfileViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
 
@@ -60,6 +61,10 @@ fun NavContainer() {
         InterestMatchViewModel()
     }
 
+    val chatSyncViewModel = viewModel {
+        ChatSyncViewModel()
+    }
+
     val backStack = rememberNavBackStack(
         NavScreen.Profile
     )
@@ -71,6 +76,7 @@ fun NavContainer() {
     val contentState by chatViewModel.contentState.collectAsStateWithLifecycle()
     val userState by profileViewModel.userState.collectAsStateWithLifecycle()
     val sseState by interestMatchViewModel.events.collectAsStateWithLifecycle()
+    val syncedMessages by chatSyncViewModel.messages.collectAsStateWithLifecycle()
 
     LaunchedEffect(sseState) {
         Napier.d("Interest match state: $sseState")
@@ -153,10 +159,9 @@ fun NavContainer() {
 
                         val conversation =
                             (contentState as? ChatViewModel.ContentState.Content)?.conversations?.find { it.id == key.conversation.id }
-
                         ChatDetailScreen(
                             title = key.conversation.title,
-                            messages = (conversation?.messages ?: key.conversation.messages).asReversed(),
+                            messages =  syncedMessages + (conversation?.messages ?: key.conversation.messages).asReversed(),
                             onBack = {
                                 backStack.removeLastOrNull()
                             },
@@ -164,6 +169,16 @@ fun NavContainer() {
                                 chatViewModel.sendMessage(
                                     conversationId = key.conversation.id,
                                     text = it,
+                                )
+                            },
+                            onSync = {
+                                chatSyncViewModel.start(
+                                    conversationId = key.conversation.id,
+                                    lastSeen = key.conversation.messages.filter {
+                                        it.id != 0L
+                                    }.minOfOrNull {
+                                        it.sentAt
+                                    },
                                 )
                             }
                         )

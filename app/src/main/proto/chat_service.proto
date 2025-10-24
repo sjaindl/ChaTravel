@@ -1,0 +1,65 @@
+syntax = "proto3";
+package com.sjaindl.chatravel;
+
+option java_multiple_files = true;
+option java_outer_classname = "ChatServiceProto";
+option java_package = "com.chatravel.grpc.v1";
+
+// Domain
+message Message {
+  uint64 message_id = 1;
+  uint64 conversation_id = 2;
+  uint64 sender_id = 3;
+  string text = 4;
+  string created_at_iso = 5; // ISO-8601 format
+}
+
+message ClientHello {
+  uint64 conversation_id = 1;
+  string last_seen_message_iso = 2;
+}
+
+message ClientSendMessage {
+  uint64 conversation_id = 1;
+  uint64 user_id = 2;
+  string text = 3;
+}
+
+message ClientAck {
+  uint64 message_id = 1;
+}
+
+message ChatClientEvent {
+  oneof kind {
+    ClientHello hello = 1;
+    ClientSendMessage send = 2;
+    ClientAck ack = 3;
+  }
+}
+
+message ServerBackfill {
+  repeated Message messages = 1; // initial backlog
+}
+
+message ServerAck {
+  bool ok = 1;
+  uint64 message_id = 2;
+  string error = 3;
+}
+
+message ServerHeartbeat {
+  string server_time_iso = 1;
+}
+
+message ChatServerEvent {
+  oneof kind {
+    ServerBackfill backfill = 1;
+    ServerAck ack = 2;
+    ServerHeartbeat heartbeat = 3;
+  }
+}
+
+service ChatService {
+  // Bidirectional streaming: client sends hello; server streams backfill
+  rpc ChatStream (stream ChatClientEvent) returns (stream ChatServerEvent);
+}

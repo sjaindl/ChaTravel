@@ -61,8 +61,7 @@ val appModule = module {
             install(WebSockets)
 
             defaultRequest {
-                //url("http://10.0.2.2:8080")
-                url("http://0.0.0.0:8080")
+                url("http://10.0.2.2:8080")
             }
         }
     }

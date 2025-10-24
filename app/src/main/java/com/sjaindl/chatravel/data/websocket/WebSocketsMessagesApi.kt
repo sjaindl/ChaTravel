@@ -25,7 +25,7 @@ import kotlinx.serialization.json.Json
 class WebSocketsMessagesApi(
     private val client: HttpClient,
     private val json: Json,
-    private val baseUrl: String = "ws://0.0.0.0:8080",
+    private val baseUrl: String = "ws://10.0.2.2:8080",
 ) {
 
     private var sessionJob: Job? = null

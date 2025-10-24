@@ -147,13 +147,11 @@ class ChatViewModel: ViewModel(), KoinComponent {
             }
 
             messageFlow.collectLatest { messageList ->
-                val currentUserId = userRepository.getCurrentUser()?.userId ?: return@collectLatest
-
-                val conversations = messagesRepository.getConversations(currentUserId)
+                val conversations = messagesRepository.getConversations(userId)
                 val users = userRepository.getUsers().users
 
                 val me = users.first { user ->
-                    user.userId == currentUserId
+                    user.userId == userId
                 }
 
                 val mapped = messageList.map {
@@ -168,7 +166,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
                         ),
                         text = it.text,
                         sentAt = Instant.parse(it.createdAt),
-                        isMine = it.senderId == currentUserId,
+                        isMine = it.senderId == userId,
                     )
                 }.groupBy { message ->
                     message.conversationId

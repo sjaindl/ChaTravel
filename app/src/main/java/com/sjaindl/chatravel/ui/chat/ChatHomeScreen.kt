@@ -116,7 +116,9 @@ fun ChatHomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text(title) },
                 actions = {
-                    if (trailingContent != null) Row(content = trailingContent)
+                    if (trailingContent != null) {
+                        Row(content = trailingContent)
+                    }
                 }
             )
         },

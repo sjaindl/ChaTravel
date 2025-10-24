@@ -36,7 +36,7 @@ class InterestMatchSseClient(
     private val client: HttpClient,
     private val json: Json,
     private val scope: CoroutineScope,
-    private val baseUrl: String = "http://0.0.0.0:8080",
+    private val baseUrl: String = "http://10.0.2.2:8080",
 ) {
     private var job: Job? = null
 

@@ -1,8 +1,11 @@
+import com.google.protobuf.gradle.id
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.protobuf)
 }
 
 android {
@@ -75,6 +78,13 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.koin.android)
 
+    implementation(libs.grpc.okhttp)
+    implementation(libs.grpc.protobuf.lite)
+    implementation(libs.grpc.protobuf.javalite)
+    implementation(libs.grpc.stub)
+    implementation(libs.grpc.kotlin.stub)
+    implementation(libs.kotlinx.coroutines.android)
+
     testImplementation(libs.junit)
     testImplementation(libs.koin.test)
 
@@ -85,4 +95,29 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.33.0"
+    }
+
+    plugins {
+        id("grpc")  { artifact = "io.grpc:protoc-gen-grpc-java:1.76.0" }
+        id("grpckt"){ artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.3:jdk8@jar" }
+    }
+    // Android needs LITE messages for size; generate Java lite + gRPC Java + gRPC Kotlin
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                // Generate Java messages as *lite*
+                id("java") { option("lite") }
+            }
+            task.plugins {
+                id("grpc") { option("lite") }  // generates Java gRPC stubs (lite-compatible)
+                id("grpckt") { option("lite") }  // generates Kotlin coroutine stubs (ChatServiceGrpcKt)
+            }
+        }
+    }
 }

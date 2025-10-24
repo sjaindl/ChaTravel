@@ -29,7 +29,12 @@ class MessagesRepository(
 
         val id = Random.nextLong(from = 0, until = Long.MAX_VALUE)
         val interest = Interest.valueOf(interestValue)
-        val conversation = Conversation(conversationId = id, firstUserId = firstUserId, secondUserId = secondUserId, interest = interest)
+        val conversation = Conversation(
+            conversationId = id,
+            firstUserId = firstUserId,
+            secondUserId = secondUserId,
+            interest = interest
+        )
         collection.insertOne(document = conversation)
 
         return id

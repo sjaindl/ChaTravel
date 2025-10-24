@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +36,7 @@ fun ChatDetailScreen(
     messages: List<Message>,
     onBack: () -> Unit,
     onSend: (String) -> Unit,
+    onSync: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var draft by remember {
@@ -44,10 +46,22 @@ fun ChatDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = {
+                    Text(title)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = onSync,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sync,
+                            contentDescription = "Sync messages",
+                        )
                     }
                 }
             )
@@ -92,8 +106,9 @@ private fun ChatDetailPreview() {
         ChatDetailScreen(
             title = "Project Alpha Centauri",
             messages = sampleMessages().asReversed(),
-            onBack = {},
-            onSend = {}
+            onBack = { },
+            onSend = { },
+            onSync = { },
         )
     }
 }
