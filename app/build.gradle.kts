@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.graphQL)
 }
 
 android {
@@ -67,6 +68,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.logging.napier)
     implementation(libs.viewmodel.compose)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
@@ -83,7 +87,9 @@ dependencies {
     implementation(libs.grpc.protobuf.javalite)
     implementation(libs.grpc.stub)
     implementation(libs.grpc.kotlin.stub)
-    implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.apollo.runtime)
+    //implementation(libs.apollo.coroutines.support)
 
     testImplementation(libs.junit)
     testImplementation(libs.koin.test)
@@ -118,6 +124,18 @@ protobuf {
                 id("grpc") { option("lite") }  // generates Java gRPC stubs (lite-compatible)
                 id("grpckt") { option("lite") }  // generates Kotlin coroutine stubs (ChatServiceGrpcKt)
             }
+        }
+    }
+}
+
+apollo {
+    service("chatravel") {
+        packageName.set("com.sjaindl.chatravel.gql")
+
+        // During development, fetching schema from server:
+        introspection {
+            endpointUrl.set("http://0.0.0.0:8080/graphql")
+            // headers.put("Authorization", "Bearer ...")
         }
     }
 }

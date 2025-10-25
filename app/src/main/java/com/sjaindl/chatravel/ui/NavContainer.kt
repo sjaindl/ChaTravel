@@ -29,6 +29,7 @@ import com.sjaindl.chatravel.ui.vm.ChatSyncViewModel
 import com.sjaindl.chatravel.ui.vm.ChatViewModel
 import com.sjaindl.chatravel.ui.vm.InterestMatchViewModel
 import com.sjaindl.chatravel.ui.vm.ProfileViewModel
+import com.sjaindl.chatravel.ui.vm.TopMatchesViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
 
@@ -65,6 +66,10 @@ fun NavContainer() {
         ChatSyncViewModel()
     }
 
+    val topMatchesViewModel = viewModel {
+        TopMatchesViewModel()
+    }
+
     val backStack = rememberNavBackStack(
         NavScreen.Profile
     )
@@ -77,11 +82,17 @@ fun NavContainer() {
     val userState by profileViewModel.userState.collectAsStateWithLifecycle()
     val sseState by interestMatchViewModel.events.collectAsStateWithLifecycle()
     val syncedMessages by chatSyncViewModel.messages.collectAsStateWithLifecycle()
+    val topMatches by topMatchesViewModel.contentState.collectAsStateWithLifecycle()
 
     LaunchedEffect(sseState) {
         Napier.d("Interest match state: $sseState")
         sseState.lastOrNull()?.let {
             snackbar.showSnackbar("New user with same interests: ${it.name}")
+
+            // refetching top matches
+            (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
+                topMatchesViewModel.start(userId = user.userId)
+            }
         }
     }
 
@@ -120,18 +131,26 @@ fun NavContainer() {
                             (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
                                 chatViewModel.fetchChats(userId = user.userId, context = context)
                                 interestMatchViewModel.start(userId = user.userId)
+                                topMatchesViewModel.start(userId = user.userId)
                             }
                         }
 
                         ChatHomeScreen(
                             contentState = contentState,
+                            topMatches = topMatches,
                             onConversationClick = {
                                 backStack.add(
                                     NavScreen.ChatDetail(it)
                                 )
                             },
                             loadUsers = profileViewModel::loadUsers,
-                            startConversation = chatViewModel::startConversation,
+                            startConversation = { otherUserId, interest ->
+                                chatViewModel.startConversation(
+                                    userId = otherUserId,
+                                    interest = interest,
+                                    context = context,
+                                )
+                            },
                             trailingContent = {
                                 IconButton(
                                     onClick = {

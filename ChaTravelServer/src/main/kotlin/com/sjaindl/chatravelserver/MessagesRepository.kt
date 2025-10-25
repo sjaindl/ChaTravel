@@ -81,6 +81,15 @@ class MessagesRepository(
         return since(messages = result, instant = since)
     }
 
+    suspend fun countActiveConversationsForUserSince(userId: Long, since: Instant): Int {
+        val conversations = getConversations(userId = userId)
+
+        return conversations.fold(0) { sum, conversation ->
+            val messageCount = getMessages(conversationId = conversation.conversationId, since = since).size
+            sum + messageCount
+        }
+    }
+
     private fun since(messages: List<Message>, instant: Instant?): List<Message> {
         return messages
             .asSequence()

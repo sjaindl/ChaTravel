@@ -14,6 +14,8 @@ protobuf = "4.33.0"
 protobuf-plugin = "3.25.3"
 protogen = "1.5.0"
 protoc-java = "1.5.0"
+graphql-java = "24.3"
+faster-xml = "2.20.0"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
@@ -30,11 +32,15 @@ protobuf-kotlin-lite = { group = "com.google.protobuf", name = "protobuf-kotlin-
 protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util", version = "protobuf" }
 protoc-gen-grpc-java = { group = "io.grpc", name = "protoc-gen-grpc-java", version = "protoc-java" }
 protoc-gen-grpc-kotlin = { group = "io.grpc", name = "protoc-gen-grpc-kotlin", version = "protogen" }
+protobuf = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
 grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpc-services = { module = "io.grpc:grpc-services", version.ref = "grpc" }
 grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
+graphql-java = { module = "com.graphql-java:graphql-java", version.ref = "graphql-java" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "faster-xml" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "faster-xml" }
 
 [bundles]
 

@@ -16,6 +16,15 @@ data class User(
     val userId: Long,
     val name: String,
     val interests: List<Interest>,
+    val avatarUrl: String = listOf(
+        "https://avatar.iran.liara.run/public/99",
+        "https://avatar.iran.liara.run/public/job/police/male",
+        "https://avatar.iran.liara.run/public/46",
+        "https://avatar.iran.liara.run/public/100",
+        "https://avatar.iran.liara.run/public/75",
+        "https://avatar.iran.liara.run/public/job/firefighters/female",
+        "https://avatar.iran.liara.run/public/job/astronomer/female",
+    ).random(),
 )
 
 @Serializable

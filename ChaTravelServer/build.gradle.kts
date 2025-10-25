@@ -18,6 +18,7 @@ dependencies {
     implementation(ktorLibs.client.cio)
     implementation(ktorLibs.client.json)
     implementation(ktorLibs.serialization.kotlinx.json)
+    implementation(ktorLibs.serialization.jackson)
     implementation(ktorLibs.client.apache)
     implementation(ktorLibs.client.encoding)
     implementation(ktorLibs.server.contentNegotiation)
@@ -30,7 +31,7 @@ dependencies {
     implementation(libs.mongo)
     implementation(libs.kmongo.coroutine.serialization)
     implementation(libs.logback)
-    implementation(libs.coroutines)
+    implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.grpc.netty)
     implementation(libs.grpc.stub)
@@ -38,6 +39,10 @@ dependencies {
     implementation(libs.grpc.kotlin.stub)
     implementation(libs.protobuf)
     implementation(libs.grpc.protobuf)
+
+    implementation(libs.graphql.java)
+    implementation(libs.jackson.databind)
+    implementation(libs.jackson.module.kotlin)
 
     testImplementation(kotlin("test"))
 }

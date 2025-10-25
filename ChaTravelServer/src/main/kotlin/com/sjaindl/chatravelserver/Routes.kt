@@ -1,14 +1,5 @@
 package com.sjaindl.chatravelserver
 
-import com.sjaindl.chatravelserver.ConversationsResponse
-import com.sjaindl.chatravelserver.CreateConversationRequest
-import com.sjaindl.chatravelserver.CreateMessageRequest
-import com.sjaindl.chatravelserver.CreateOrUpdateUserRequest
-import com.sjaindl.chatravelserver.MessageBus
-import com.sjaindl.chatravelserver.MessagesRepository
-import com.sjaindl.chatravelserver.MessagesResponse
-import com.sjaindl.chatravelserver.UserRepository
-import com.sjaindl.chatravelserver.UsersResponse
 import com.sjaindl.chatravelserver.sse.DiscoverableUserEvent
 import com.sjaindl.chatravelserver.sse.InterestMatchBus
 import io.ktor.http.*
@@ -83,7 +74,7 @@ fun Route.userRoutes(userRepository: UserRepository) {
             }
 
             // Get users by interest
-            val users = userRepository.getUsersByInterest(interestValue = interest)
+            val users = userRepository.getUsersWithSameInterests(interestValue = interest)
             call.respond(UsersResponse(users = users))
         }
     }

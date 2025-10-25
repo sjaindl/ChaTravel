@@ -1,0 +1,14 @@
+query TopMatches($userId: ID!, $limit: Int = 20) {
+  topMatches(userId: $userId, limit: $limit) {
+    score
+    commonInterestsCount
+    commonInterests
+    activeConversations
+    user {
+      userId
+      name
+      interests
+      avatarUrl
+    }
+  }
+}

@@ -1,0 +1,24 @@
+type User {
+  userId: ID!
+  name: String!
+  interests: [String!]!
+  avatarUrl: String
+}
+
+type TopMatch {
+  user: User!
+  score: Int!
+  commonInterestsCount: Int!
+  commonInterests: [String!]!
+  activeConversations: Int!
+}
+
+type Query {
+  """
+  Return best matches for `userId`, sorted by:
+  score = (commonInterestsCount * 10) + activeConversationsInLast30d
+  """
+  topMatches(userId: ID!, limit: Int = 20): [TopMatch!]!
+
+  user(userId: ID!): User
+}

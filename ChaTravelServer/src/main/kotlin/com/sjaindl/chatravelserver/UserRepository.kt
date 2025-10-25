@@ -6,6 +6,7 @@ import org.litote.kmongo.contains
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.eq
+import org.litote.kmongo.`in`
 
 class UserRepository(private val database: CoroutineDatabase) {
 
@@ -59,7 +60,7 @@ class UserRepository(private val database: CoroutineDatabase) {
         return user
     }
 
-    suspend fun getUsersByInterest(interestValue: String): List<User> {
+    suspend fun getUsersWithSameInterests(interestValue: String): List<User> {
         val collection = createOrGetCollection<User>(USER_COLLECTION)
         val interest = Interest.entries.find {
             it.name == interestValue
@@ -69,9 +70,15 @@ class UserRepository(private val database: CoroutineDatabase) {
         return result
     }
 
-    suspend fun getUserInterests(userId: Long): List<Interest> {
+    suspend fun getUsersWithSameInterests(interests: List<Interest>): List<User> {
         val collection = createOrGetCollection<User>(USER_COLLECTION)
-        val user = collection.findOne(User::userId.eq(userId))
+
+        val result = collection.find(User::interests `in` interests).toList()
+        return result
+    }
+
+    suspend fun getUserInterests(userId: Long): List<Interest> {
+        val user = getUser(userId = userId)
 
         return user?.interests ?: emptyList()
     }
@@ -81,6 +88,13 @@ class UserRepository(private val database: CoroutineDatabase) {
 
         val result = collection.find().toList()
         return result
+    }
+
+    suspend fun getUser(userId: Long): User? {
+        val collection = createOrGetCollection<User>(USER_COLLECTION)
+        val user = collection.findOne(User::userId.eq(userId))
+
+        return user
     }
 
     private suspend inline fun<reified T: Any> createOrGetCollection(

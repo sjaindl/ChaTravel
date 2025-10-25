@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,14 +34,17 @@ import com.sjaindl.chatravel.ui.vm.ChatViewModel.ContentState
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.ui.ErrorScreen
 import com.sjaindl.chatravel.ui.LoadingScreen
+import com.sjaindl.chatravel.ui.chat.matches.TopMatchesBottomSheet
 import com.sjaindl.chatravel.ui.profile.Interest
 import com.sjaindl.chatravel.ui.theme.ChaTravelTheme
+import com.sjaindl.chatravel.ui.vm.TopMatchesViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatHomeScreen(
     contentState: ContentState,
+    topMatches: List<TopMatchesViewModel.TopMatch>,
     onConversationClick: (Conversation) -> Unit,
     modifier: Modifier = Modifier,
     title: String = "Chats",
@@ -56,8 +60,16 @@ fun ChatHomeScreen(
         mutableStateOf(false)
     }
 
+    var showTopMatches by remember {
+        mutableStateOf(false)
+    }
+
     var interestSelection by remember {
         mutableStateOf<Interest?>(null)
+    }
+
+    var topMatchSelection by remember {
+        mutableStateOf<TopMatchesViewModel.TopMatch?>(null)
     }
 
     val snackbar = remember {
@@ -82,6 +94,45 @@ fun ChatHomeScreen(
         )
     }
 
+    topMatchSelection?.let { selection ->
+        InterestPickerBottomSheet(
+            interests = selection.commonInterests,
+            initiallySelected = interestSelection,
+            onDismiss = {
+                topMatchSelection = null
+            },
+            onConfirm = { interest ->
+                runCatching {
+                    startConversation(selection.id, interest!!)
+                }.onSuccess { convo ->
+                    scope.launch {
+                        snackbar.showSnackbar("Conversation started with ${selection.name}")
+                    }
+                }.onFailure { e ->
+                    scope.launch {
+                        snackbar.showSnackbar("Failed: ${e.message}")
+                    }
+                }
+
+                topMatchSelection = null
+            }
+        )
+    }
+
+    if (showTopMatches) {
+        TopMatchesBottomSheet(
+            topMatches = topMatches,
+            onDismiss = {
+                topMatchSelection = null
+                showTopMatches = false
+            },
+            onConfirm = { chosen ->
+                topMatchSelection = chosen
+                showTopMatches = false
+            }
+        )
+    }
+
     val selection = interestSelection
 
     if (showUserResults && selection != null) {
@@ -92,7 +143,6 @@ fun ChatHomeScreen(
                 showUserResults = false
             },
             onUserSelected = { user ->
-
                 runCatching {
                     startConversation(user.userId, selection)
                 }.onSuccess { convo ->
@@ -126,11 +176,19 @@ fun ChatHomeScreen(
             SnackbarHost(snackbar)
         },
         floatingActionButton = {
-            NewConversationButton(
-                onClick = {
-                    showInterestPicker = true
-                }
-            )
+            Row {
+                TopMatchesButton(
+                    onClick = {
+                        showTopMatches = true
+                    }
+                )
+
+                NewConversationButton(
+                    onClick = {
+                        showInterestPicker = true
+                    }
+                )
+            }
         }
     ) { padding ->
 
@@ -190,12 +248,23 @@ fun NewConversationButton(onClick: () -> Unit) {
     }
 }
 
+@Composable
+fun TopMatchesButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = "Top Matches"
+        )
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun PreviewHome() {
     ChaTravelTheme {
         ChatHomeScreen(
             contentState = ContentState.Content(sampleConversations()),
+            topMatches = emptyList(),
             onConversationClick = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },
@@ -210,6 +279,7 @@ private fun PreviewHomeNoConversations() {
     ChaTravelTheme {
         ChatHomeScreen(
             contentState = ContentState.Content(emptyList()),
+            topMatches = emptyList(),
             onConversationClick = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },

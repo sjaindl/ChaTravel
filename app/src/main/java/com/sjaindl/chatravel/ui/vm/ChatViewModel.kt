@@ -6,18 +6,20 @@ import androidx.lifecycle.viewModelScope
 import com.sjaindl.chatravel.BuildConfig
 import com.sjaindl.chatravel.data.CreateConversationRequest
 import com.sjaindl.chatravel.data.CreateMessageRequest
-import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.MessagesRepository
-import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.data.UserRepository
-import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
+import com.sjaindl.chatravel.data.polling.LongPoller
+import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.readMessagesDataStore
+import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.Message
 import com.sjaindl.chatravel.ui.profile.Interest
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +44,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
         data class Error(val throwable: Throwable): ContentState()
     }
 
+    private var fetchJob: Job? = null
     private val shortPoller: ShortPoller by inject<ShortPoller>()
     private val longPoller: LongPoller by inject<LongPoller>()
     private val webSocketFetcher: WebSocketFetcher by inject<WebSocketFetcher>()
@@ -70,7 +73,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
         }
     }
 
-    fun startConversation(userId: Long, interest: Interest) = viewModelScope.launch {
+    fun startConversation(userId: Long, interest: Interest, context: Context) = viewModelScope.launch {
         _contentState.value = ContentState.Loading
 
         val currentUserId = userRepository.getCurrentUser()?.userId
@@ -90,6 +93,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
             messagesRepository.startConversation(request = request)
         }.onSuccess {
             Napier.d("Started conversation with $userId")
+            fetchChats(userId = currentUserId, context = context)
         }.onFailure {
             if (it is CancellationException) throw it
             Napier.e("Could not start conversation", it)
@@ -126,82 +130,98 @@ class ChatViewModel: ViewModel(), KoinComponent {
         }
     }
 
-    fun fetchChats(userId: Long, context: Context) = viewModelScope.launch {
-        _contentState.value = ContentState.Loading
-
-        runCatching {
-            val messageFlow = when (BuildConfig.MESSAGE_NETWORK_TYPE) {
-                "SHORT_POLL" -> {
-                    shortPoller.start(userId = userId)
-                    shortPoller.messageFlow
-                }
-                "LONG_POLL" -> {
-                    longPoller.start(userId = userId)
-                    longPoller.messageFlow
-                }
-                "WEBSOCKETS" -> {
-                    webSocketFetcher.start(userId = userId)
-                    webSocketFetcher.messageFlow
-                }
-                else -> throw IllegalStateException("Unknown message network type")
+    fun fetchChats(userId: Long, context: Context) {
+        fetchJob?.cancel()
+        when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+            "SHORT_POLL" -> {
+                shortPoller.stop()
             }
+            "LONG_POLL" -> {
+                longPoller.stop()
+            }
+            "WEBSOCKETS" -> {
+                webSocketFetcher.stop()
+            }
+            else -> throw IllegalStateException("Unknown message network type")
+        }
 
-            messageFlow.collectLatest { messageList ->
-                val conversations = messagesRepository.getConversations(userId)
-                val users = userRepository.getUsers().users
+        fetchJob = viewModelScope.launch {
+            _contentState.value = ContentState.Loading
 
-                val me = users.first { user ->
-                    user.userId == userId
+            runCatching {
+                val messageFlow = when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+                    "SHORT_POLL" -> {
+                        shortPoller.start(userId = userId)
+                        shortPoller.messageFlow
+                    }
+                    "LONG_POLL" -> {
+                        longPoller.start(userId = userId)
+                        longPoller.messageFlow
+                    }
+                    "WEBSOCKETS" -> {
+                        webSocketFetcher.start(userId = userId)
+                        webSocketFetcher.messageFlow
+                    }
+                    else -> throw IllegalStateException("Unknown message network type")
                 }
 
-                val mapped = messageList.map {
-                    Message(
-                        id = it.messageId,
-                        conversationId = it.conversationId,
-                        sender = UserDto(
-                            userId = it.senderId,
-                            name = users.firstOrNull {
-                                    user -> user.userId == it.senderId
-                            }?.name ?: "Anonymous"
-                        ),
-                        text = it.text,
-                        sentAt = Instant.parse(it.createdAt),
-                        isMine = it.senderId == userId,
-                    )
-                }.groupBy { message ->
-                    message.conversationId
-                }
+                messageFlow.collectLatest { messageList ->
+                    val conversations = messagesRepository.getConversations(userId)
+                    val users = userRepository.getUsers().users
 
-                val updatedConversations = mapped.map {
-                    val interest = conversations.conversations.find { conversation ->
-                        it.key == conversation.conversationId
-                    }?.interest
-
-                    val secondUser = users.first { user ->
-                        user.userId == it.value[0].sender.userId
+                    val me = users.first { user ->
+                        user.userId == userId
                     }
 
-                    Conversation(
-                        id = it.key,
-                        title = "$interest (${secondUser.name})",
-                        participants = listOf(me, secondUser),
-                        unreadCount = it.value.count { message ->
-                            val ids = context.readMessagesDataStore.data.firstOrNull()?.ids ?: return@count false
-                            ids.contains(message.id).not()
-                        },
-                        messages = it.value,
-                    )
-                }
+                    val mapped = messageList.map {
+                        Message(
+                            id = it.messageId,
+                            conversationId = it.conversationId,
+                            sender = UserDto(
+                                userId = it.senderId,
+                                name = users.firstOrNull {
+                                        user -> user.userId == it.senderId
+                                }?.name ?: "Anonymous"
+                            ),
+                            text = it.text,
+                            sentAt = Instant.parse(it.createdAt),
+                            isMine = it.senderId == userId,
+                        )
+                    }.groupBy { message ->
+                        message.conversationId
+                    }
 
-                _contentState.value = ContentState.Content(updatedConversations)
+                    val updatedConversations = mapped.map {
+                        val interest = conversations.conversations.find { conversation ->
+                            it.key == conversation.conversationId
+                        }?.interest
+
+                        val secondUser = users.first { user ->
+                            user.userId == it.value[0].sender.userId
+                        }
+
+                        Conversation(
+                            id = it.key,
+                            title = "$interest (${secondUser.name})",
+                            participants = listOf(me, secondUser),
+                            unreadCount = it.value.count { message ->
+                                val ids = context.readMessagesDataStore.data.firstOrNull()?.ids ?: return@count false
+                                ids.contains(message.id).not()
+                            },
+                            messages = it.value,
+                        )
+                    }
+
+                    _contentState.value = ContentState.Content(updatedConversations)
+                }
+            }.onFailure {
+                if (it is CancellationException) throw it
+                Napier.e("Could not poll messages", it)
+                _contentState.value = ContentState.Error(it)
+                shortPoller.stop()
+                longPoller.stop()
+                webSocketFetcher.stop()
             }
-        }.onFailure {
-            if (it is CancellationException) throw it
-            Napier.e("Could not poll messages", it)
-            _contentState.value = ContentState.Error(it)
-            shortPoller.stop()
-            longPoller.stop()
-            webSocketFetcher.stop()
         }
     }
 }
