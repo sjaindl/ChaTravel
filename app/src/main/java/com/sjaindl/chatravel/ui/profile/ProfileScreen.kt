@@ -1,6 +1,12 @@
 package com.sjaindl.chatravel.ui.profile
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,12 +29,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.sjaindl.chatravel.ui.vm.ProfileViewModel.UserState
+import androidx.core.content.ContextCompat
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.ui.ErrorScreen
 import com.sjaindl.chatravel.ui.LoadingScreen
+import com.sjaindl.chatravel.ui.vm.ProfileViewModel.UserState
 
 enum class Interest(val displayName: String) {
     SPORTS("Sports"),
@@ -57,6 +65,18 @@ fun ProfileEditor(
     var selectedInterests by remember {
         mutableStateOf<List<Interest>>(emptyList())
     }
+
+    var notify by remember {
+        mutableStateOf(false)
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) {
+        onContinue(username, selectedInterests)
+    }
+
+    val context = LocalContext.current
 
     val userNameLocked by remember(userState) {
         derivedStateOf {
@@ -154,8 +174,34 @@ fun ProfileEditor(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = notify,
+                        onCheckedChange = {
+                            notify = it
+                        }
+                    )
+                    Text("Notify me about users with same interests")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
-                    onClick = { onContinue(username, selectedInterests) },
+                    onClick = {
+                        if (notify) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                    onContinue(username, selectedInterests)
+                                } else {
+                                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            } else {
+                                onContinue(username, selectedInterests)
+                            }
+                        } else {
+                            onContinue(username, selectedInterests)
+                        }
+                    },
                     enabled = username.isNotBlank() && selectedInterests.isNotEmpty(),
                     modifier = Modifier.align(Alignment.End)
                 ) {
@@ -170,7 +216,7 @@ fun ProfileEditor(
 @Composable
 fun ProfileEditorPreview() {
     ProfileEditor(
-        userState = UserState.Content(UserDto(1, "Luke Skywalker", listOf(Interest.OFF_THE_BEATEN_TRACK.name))),
+        userState = UserState.Content(UserDto(1, "Luke Skywalker", "",listOf(Interest.OFF_THE_BEATEN_TRACK.name))),
         onContinue = { _, _ -> }
     )
 }

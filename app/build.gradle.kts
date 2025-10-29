@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.graphQL)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -89,7 +90,9 @@ dependencies {
     implementation(libs.grpc.kotlin.stub)
 
     implementation(libs.apollo.runtime)
-    //implementation(libs.apollo.coroutines.support)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.koin.test)

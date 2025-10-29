@@ -216,7 +216,7 @@ class ChatViewModel: ViewModel(), KoinComponent {
                 }
             }.onFailure {
                 if (it is CancellationException) throw it
-                Napier.e("Could not poll messages", it)
+                Napier.e("Could not fetch messages", it)
                 _contentState.value = ContentState.Error(it)
                 shortPoller.stop()
                 longPoller.stop()

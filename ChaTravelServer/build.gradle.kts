@@ -44,6 +44,8 @@ dependencies {
     implementation(libs.jackson.databind)
     implementation(libs.jackson.module.kotlin)
 
+    implementation(libs.firebase.admin.sdk)
+
     testImplementation(kotlin("test"))
 }
 

@@ -1,5 +1,6 @@
 package com.sjaindl.chatravel.di
 
+import com.sjaindl.chatravel.data.FcmTokenApi
 import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.MessagesApi
 import com.sjaindl.chatravel.data.MessagesRepository
@@ -8,6 +9,8 @@ import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.UserApi
 import com.sjaindl.chatravel.data.UserRepository
 import com.sjaindl.chatravel.data.UserRepositoryImpl
+import com.sjaindl.chatravel.data.fcm.TokenRepository
+import com.sjaindl.chatravel.data.fcm.TokenRepositoryImpl
 import com.sjaindl.chatravel.data.sse.InterestMatchSseClient
 import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.data.websocket.WebSocketsMessagesApi
@@ -38,12 +41,22 @@ val appModule = module {
         )
     }
 
+    single<TokenRepository> {
+        TokenRepositoryImpl(
+            fcmTokenApi = get(),
+        )
+    }
+
     single<MessagesApi> {
         MessagesApi(client = get())
     }
 
     single<UserApi> {
         UserApi(client = get())
+    }
+
+    single<FcmTokenApi> {
+        FcmTokenApi(client = get())
     }
 
     single<HttpClient> {

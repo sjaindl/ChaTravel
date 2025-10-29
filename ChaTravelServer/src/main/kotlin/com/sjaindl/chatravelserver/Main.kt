@@ -2,7 +2,13 @@ package com.sjaindl.chatravelserver
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.google.auth.oauth2.ServiceAccountCredentials
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.mongodb.MongoClientSettings
+import com.sjaindl.chatravelserver.fcm.InterestMatchPusher
+import com.sjaindl.chatravelserver.fcm.TokenRepository
+import com.sjaindl.chatravelserver.fcm.pushRoutes
 import com.sjaindl.chatravelserver.graphql.buildGraphQL
 import com.sjaindl.chatravelserver.graphql.graphqlRoutes
 import com.sjaindl.chatravelserver.grpc.ChatService
@@ -33,11 +39,14 @@ import org.slf4j.event.Level
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
 import java.util.concurrent.TimeUnit
+import java.io.FileInputStream
 import kotlin.jvm.java
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
     runBlocking {
+        initFirebaseAdmin(serviceAccountPath = "src/main/resources/chatravel-firebase-adminsdk.json")
+
         val embeddedMongoDB = EmbeddedMongoDB(
             ip = "localhost",
             port = 27017,
@@ -55,9 +64,11 @@ fun main() {
 
         val userRepository = UserRepository(database = database)
         val messagesRepository = MessagesRepository(database = database)
+        val tokenRepository = TokenRepository(database = database)
 
-        val ktorEngine = startServer(messagesRepository = messagesRepository, userRepository = userRepository)
+        val ktorEngine = startServer(messagesRepository = messagesRepository, userRepository = userRepository, tokenRepository = tokenRepository)
         val grpcServer = startGrpc(messagesRepository = messagesRepository)
+        InterestMatchPusher(userRepository = userRepository, tokenRepository = tokenRepository).start()
 
         println("HTTP on 8080 and gRPC on 9090 are up.")
 
@@ -96,6 +107,7 @@ fun main() {
 fun startServer(
     messagesRepository: MessagesRepository,
     userRepository: UserRepository,
+    tokenRepository: TokenRepository,
 ): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
 
     val graphQL = GraphQLLoader(messagesRepository = messagesRepository, userRepository = userRepository).load()
@@ -136,6 +148,7 @@ fun startServer(
             websocketMessageRoutes(messagesRepository = messagesRepository)
             SSERoutes(userRepository = userRepository)
             graphqlRoutes(graphQL = graphQL)
+            pushRoutes(tokenRepository = tokenRepository)
         }
     }.start(wait = false)
 }
@@ -154,6 +167,14 @@ fun startGrpc(
 
     println("gRPC server listening on $port")
     return server
+}
+
+fun initFirebaseAdmin(serviceAccountPath: String) {
+    if (FirebaseApp.getApps().isNotEmpty()) return
+    val options = FirebaseOptions.builder()
+        .setCredentials(ServiceAccountCredentials.fromStream(FileInputStream(serviceAccountPath)))
+        .build()
+    FirebaseApp.initializeApp(options)
 }
 
 class GraphQLLoader(

@@ -27,6 +27,7 @@ import com.sjaindl.chatravel.ui.chat.detail.ChatDetailScreen
 import com.sjaindl.chatravel.ui.profile.ProfileEditor
 import com.sjaindl.chatravel.ui.vm.ChatSyncViewModel
 import com.sjaindl.chatravel.ui.vm.ChatViewModel
+import com.sjaindl.chatravel.ui.vm.FcmViewModel
 import com.sjaindl.chatravel.ui.vm.InterestMatchViewModel
 import com.sjaindl.chatravel.ui.vm.ProfileViewModel
 import com.sjaindl.chatravel.ui.vm.TopMatchesViewModel
@@ -44,10 +45,13 @@ sealed class NavScreen: NavKey {
 
     @Serializable
     data class ChatDetail(val conversation: Conversation): NavScreen()
+
+    @Serializable
+    data class ConnectWithMatch(val matchId: Long): NavScreen()
 }
 
 @Composable
-fun NavContainer() {
+fun NavContainer(matchId: Long?) {
     val context = LocalContext.current
 
     val chatViewModel = viewModel {
@@ -68,6 +72,10 @@ fun NavContainer() {
 
     val topMatchesViewModel = viewModel {
         TopMatchesViewModel()
+    }
+
+    val fcmViewModel = viewModel {
+        FcmViewModel()
     }
 
     val backStack = rememberNavBackStack(
@@ -96,6 +104,12 @@ fun NavContainer() {
         }
     }
 
+    LaunchedEffect(matchId) {
+        if (matchId != null) {
+            backStack.add(NavScreen.ConnectWithMatch(matchId))
+        }
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -103,6 +117,7 @@ fun NavContainer() {
             SnackbarHost(snackbar)
         },
     ) { innerPadding ->
+
         NavDisplay(
             backStack = backStack,
             modifier = Modifier
@@ -132,6 +147,7 @@ fun NavContainer() {
                                 chatViewModel.fetchChats(userId = user.userId, context = context)
                                 interestMatchViewModel.start(userId = user.userId)
                                 topMatchesViewModel.start(userId = user.userId)
+                                fcmViewModel.registerToken(userId = user.userId)
                             }
                         }
 
@@ -203,6 +219,16 @@ fun NavContainer() {
                                         it.sentAt
                                     },
                                 )
+                            }
+                        )
+                    }
+
+                    is NavScreen.ConnectWithMatch -> NavEntry(key) {
+                        ConnectWithMatchScreen(
+                            matchId = key.matchId,
+                            onDismiss = {
+                                backStack.removeLastOrNull()
+                                backStack.add(NavScreen.ChatOverview)
                             }
                         )
                     }

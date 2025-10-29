@@ -14,6 +14,7 @@ data class CreateUserRequest(
 data class UserDto(
     val userId: Long,
     val name: String,
+    val avatarUrl: String? = null,
     val interests: List<String> = emptyList(),
 ) {
     companion object {
@@ -65,14 +66,12 @@ data class MessageDto(
     }
 }
 
-
 @Serializable
 data class CreateMessageRequest(
     val conversationId: Long,
     val senderId: Long,
     val text: String,
 )
-
 
 @Serializable
 data class MessagesResponse(

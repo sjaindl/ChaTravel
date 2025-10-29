@@ -29,6 +29,7 @@ render.experimental.xml
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
+chatravel-firebase-adminsdk.json
 
 # Android Profiling
 *.hprof

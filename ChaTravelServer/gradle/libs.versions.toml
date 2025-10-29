@@ -16,6 +16,7 @@ protogen = "1.5.0"
 protoc-java = "1.5.0"
 graphql-java = "24.3"
 faster-xml = "2.20.0"
+firebase-admin = "9.7.0"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
@@ -41,6 +42,7 @@ grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKot
 graphql-java = { module = "com.graphql-java:graphql-java", version.ref = "graphql-java" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "faster-xml" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "faster-xml" }
+firebase-admin-sdk = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin" }
 
 [bundles]
 
