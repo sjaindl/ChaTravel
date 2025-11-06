@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
-import com.sjaindl.chatravel.gql.TopMatchesQuery
+import com.sjaindl.chatravel.graphql.TopMatchesQuery
 import com.sjaindl.chatravel.ui.profile.Interest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

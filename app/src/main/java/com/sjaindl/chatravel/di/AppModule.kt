@@ -11,6 +11,7 @@ import com.sjaindl.chatravel.data.UserRepository
 import com.sjaindl.chatravel.data.UserRepositoryImpl
 import com.sjaindl.chatravel.data.fcm.TokenRepository
 import com.sjaindl.chatravel.data.fcm.TokenRepositoryImpl
+import com.sjaindl.chatravel.data.prefs.UserSettingsRepository
 import com.sjaindl.chatravel.data.sse.InterestMatchSseClient
 import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.data.websocket.WebSocketsMessagesApi
@@ -44,6 +45,12 @@ val appModule = module {
     single<TokenRepository> {
         TokenRepositoryImpl(
             fcmTokenApi = get(),
+        )
+    }
+
+    single<UserSettingsRepository> {
+        UserSettingsRepository(
+            context = androidApplication(),
         )
     }
 

@@ -51,6 +51,8 @@ enum class Interest(val displayName: String) {
 @Composable
 fun ProfileEditor(
     userState: UserState,
+    notify: Boolean,
+    onNotifyChecked: (Boolean) -> Unit,
     onContinue: (String, List<Interest>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -64,10 +66,6 @@ fun ProfileEditor(
 
     var selectedInterests by remember {
         mutableStateOf<List<Interest>>(emptyList())
-    }
-
-    var notify by remember {
-        mutableStateOf(false)
     }
 
     val launcher = rememberLauncherForActivityResult(
@@ -177,9 +175,7 @@ fun ProfileEditor(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
                         checked = notify,
-                        onCheckedChange = {
-                            notify = it
-                        }
+                        onCheckedChange = onNotifyChecked,
                     )
                     Text("Notify me about users with same interests")
                 }
@@ -217,6 +213,8 @@ fun ProfileEditor(
 fun ProfileEditorPreview() {
     ProfileEditor(
         userState = UserState.Content(UserDto(1, "Luke Skywalker", "",listOf(Interest.OFF_THE_BEATEN_TRACK.name))),
+        notify = true,
+        onNotifyChecked = { },
         onContinue = { _, _ -> }
     )
 }
@@ -226,6 +224,8 @@ fun ProfileEditorPreview() {
 fun ProfileEditorErrorPreview() {
     ProfileEditor(
         userState = UserState.Error(IllegalStateException("Test error")),
+        notify = true,
+        onNotifyChecked = { },
         onContinue = { _, _ -> }
     )
 }
@@ -236,6 +236,8 @@ fun ProfileEditorErrorPreview() {
 fun ProfileEditorLoadingPreview() {
     ProfileEditor(
         userState = UserState.Loading,
+        notify = true,
+        onNotifyChecked = { },
         onContinue = { _, _ -> }
     )
 }

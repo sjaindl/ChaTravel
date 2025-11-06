@@ -3,7 +3,7 @@ agp = "8.13.0"
 apollo = "4.3.3"
 coilCompose = "3.3.0"
 datastorePreferences = "1.1.7"
-firebaseBom = "34.4.0"
+firebaseBom = "34.5.0"
 firebaseMessagingKtx = "24.1.2"
 grpc = "1.76.0"
 grpcKotlin = "1.5.0"
@@ -17,21 +17,22 @@ espressoCore = "3.7.0"
 kotlinxCoroutinesAndroid = "1.10.2"
 kotlinxSerializationJson = "1.9.0"
 kotlinxSerializationProtobuf = "1.9.0"
-ktor = "3.3.1"
+ktor = "3.3.2"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.10.01"
+composeBom = "2025.11.00"
 materialIconsExtendedAndroid = "1.7.8"
-nav3Core = "1.0.0-beta01"
+nav3Core = "1.0.0-rc01"
 kotlinSerialization = "2.2.21"
 koinVersion = "4.1.1"
 napierVersion = "2.7.1"
-viewModelComposeVersion = "2.9.5"
+viewModelComposeVersion = "2.9.6"
 play-services = "4.4.4"
 
 [libraries]
 androidx-compose-material-icons-extended-android = { module = "androidx.compose.material:material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastorePreferences" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }

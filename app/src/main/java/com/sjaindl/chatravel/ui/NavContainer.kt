@@ -91,6 +91,7 @@ fun NavContainer(matchId: Long?) {
     val sseState by interestMatchViewModel.events.collectAsStateWithLifecycle()
     val syncedMessages by chatSyncViewModel.messages.collectAsStateWithLifecycle()
     val topMatches by topMatchesViewModel.contentState.collectAsStateWithLifecycle()
+    val notifyUser by profileViewModel.notifyUser.collectAsStateWithLifecycle()
 
     LaunchedEffect(sseState) {
         Napier.d("Interest match state: $sseState")
@@ -131,6 +132,8 @@ fun NavContainer(matchId: Long?) {
 
                         ProfileEditor(
                             userState = userState,
+                            notify = notifyUser,
+                            onNotifyChecked = profileViewModel::setNotify,
                             onContinue = { username, interests ->
                                 profileViewModel.onUserSelected(
                                     userName = username,

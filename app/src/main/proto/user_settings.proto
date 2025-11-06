@@ -1,0 +1,10 @@
+syntax = "proto3";
+package com.sjaindl.chatravel;
+
+option java_multiple_files = true;
+option java_outer_classname = "UserPrefsProto";
+option java_package = "com.sjaindl.chatravel.prefs.v1";
+
+message UserSettings {
+  bool user_interest_notify = 1;
+}

@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.data.UserRepository
+import com.sjaindl.chatravel.data.prefs.UserSettingsRepository
 import com.sjaindl.chatravel.ui.profile.Interest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,6 +31,16 @@ class ProfileViewModel: ViewModel(), KoinComponent {
     }
 
     private val userRepository: UserRepository by inject<UserRepository>()
+
+    private val notificationRepository: UserSettingsRepository by inject<UserSettingsRepository>()
+
+    val notifyUser = notificationRepository.prefs.map {
+        it.userInterestNotify
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+        initialValue = false,
+    )
 
     private var _userState: MutableStateFlow<UserState> = MutableStateFlow<UserState>(UserState.Initial)
 
@@ -70,5 +82,9 @@ class ProfileViewModel: ViewModel(), KoinComponent {
         return userRepository.getUsers(interest = interest).users.filter {
             it.userId != userRepository.getCurrentUser()?.userId
         }
+    }
+
+    fun setNotify(notify: Boolean) = viewModelScope.launch {
+        notificationRepository.setNotify(notify)
     }
 }

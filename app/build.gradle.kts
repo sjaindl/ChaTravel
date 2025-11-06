@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.compose.material.icons.extended.android)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore)
     implementation(libs.kotlinx.serialization.protobuf)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.logging.napier)
@@ -116,16 +117,16 @@ protobuf {
         id("grpc")  { artifact = "io.grpc:protoc-gen-grpc-java:1.76.0" }
         id("grpckt"){ artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.3:jdk8@jar" }
     }
-    // Android needs LITE messages for size; generate Java lite + gRPC Java + gRPC Kotlin
+
+    // Android needs lite messages
     generateProtoTasks {
         all().forEach { task ->
             task.builtins {
-                // Generate Java messages as *lite*
                 id("java") { option("lite") }
             }
             task.plugins {
-                id("grpc") { option("lite") }  // generates Java gRPC stubs (lite-compatible)
-                id("grpckt") { option("lite") }  // generates Kotlin coroutine stubs (ChatServiceGrpcKt)
+                id("grpc") { option("lite") }
+                id("grpckt") { option("lite") }
             }
         }
     }
@@ -133,7 +134,7 @@ protobuf {
 
 apollo {
     service("chatravel") {
-        packageName.set("com.sjaindl.chatravel.gql")
+        packageName.set("com.sjaindl.chatravel.graphql")
 
         // During development, fetching schema from server:
         introspection {
