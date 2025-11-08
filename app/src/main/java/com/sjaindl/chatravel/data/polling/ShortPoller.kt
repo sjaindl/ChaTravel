@@ -29,22 +29,23 @@ class ShortPoller(
     private val _messageFlow = MutableSharedFlow<List<MessageDto>>()
     val messageFlow = _messageFlow.asSharedFlow()
 
-    fun start(userId: Long) {
+    fun start(userId: Long, lastSync: String) {
         if (job?.isActive == true) return
 
         job = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 runCatching {
-                    val conversations = messagesRepository.getConversations(userId = userId).conversations
-
-                    val iso = lastSeen?.toString()
+                    val conversations = messagesRepository.getConversations(
+                        userId = userId,
+                        sinceIsoInstant = lastSync,
+                    ).conversations
 
                     val messages = buildList {
                         addAll(
                             conversations.flatMap { conversation ->
                                 buildList {
                                     add(
-                                        MessageDto.Companion.Initial.copy(
+                                        MessageDto.Initial.copy(
                                             conversationId = conversation.conversationId,
                                             senderId = conversation.secondUserId,
                                         )

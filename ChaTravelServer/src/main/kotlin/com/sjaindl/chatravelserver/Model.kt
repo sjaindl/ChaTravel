@@ -45,6 +45,7 @@ data class Conversation(
     val firstUserId: Long,
     val secondUserId: Long,
     val interest: Interest,
+    val lastMessageAt: String, // ISO-8601
 )
 
 @Serializable

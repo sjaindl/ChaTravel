@@ -32,9 +32,9 @@ class ProfileViewModel: ViewModel(), KoinComponent {
 
     private val userRepository: UserRepository by inject<UserRepository>()
 
-    private val notificationRepository: UserSettingsRepository by inject<UserSettingsRepository>()
+    private val settingsRepository: UserSettingsRepository by inject<UserSettingsRepository>()
 
-    val notifyUser = notificationRepository.prefs.map {
+    val notifyUser = settingsRepository.prefs.map {
         it.userInterestNotify
     }.stateIn(
         scope = viewModelScope,
@@ -85,6 +85,6 @@ class ProfileViewModel: ViewModel(), KoinComponent {
     }
 
     fun setNotify(notify: Boolean) = viewModelScope.launch {
-        notificationRepository.setNotify(notify)
+        settingsRepository.setNotify(notify)
     }
 }

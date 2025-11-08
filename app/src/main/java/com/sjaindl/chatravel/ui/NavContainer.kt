@@ -92,6 +92,7 @@ fun NavContainer(matchId: Long?) {
     val syncedMessages by chatSyncViewModel.messages.collectAsStateWithLifecycle()
     val topMatches by topMatchesViewModel.contentState.collectAsStateWithLifecycle()
     val notifyUser by profileViewModel.notifyUser.collectAsStateWithLifecycle()
+    val lastSync by chatViewModel.lastSync.collectAsStateWithLifecycle()
 
     LaunchedEffect(sseState) {
         Napier.d("Interest match state: $sseState")
@@ -147,7 +148,7 @@ fun NavContainer(matchId: Long?) {
                     is NavScreen.ChatOverview -> NavEntry(key) {
                         LaunchedEffect(userState) {
                             (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
-                                chatViewModel.fetchChats(userId = user.userId, context = context)
+                                chatViewModel.fetchChats(userId = user.userId, lastSync = lastSync, context = context)
                                 interestMatchViewModel.start(userId = user.userId)
                                 topMatchesViewModel.start(userId = user.userId)
                                 fcmViewModel.registerToken(userId = user.userId)
@@ -166,6 +167,7 @@ fun NavContainer(matchId: Long?) {
                             startConversation = { otherUserId, interest ->
                                 chatViewModel.startConversation(
                                     userId = otherUserId,
+                                    lastSync = lastSync,
                                     interest = interest,
                                     context = context,
                                 )

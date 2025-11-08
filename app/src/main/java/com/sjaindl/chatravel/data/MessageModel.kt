@@ -1,5 +1,6 @@
 package com.sjaindl.chatravel.data
 
+import com.sjaindl.chatravel.ui.chat.Message
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
@@ -64,6 +65,18 @@ data class MessageDto(
 
         val Initial = MessageDto(messageId = 0, conversationId = 0, senderId = 0, text = "Welcome to your new conversation!", createdAt = Instant.ofEpochMilli(0).toString())
     }
+
+    fun toMessage(userId: Long?, userName: String?) = Message(
+        id = messageId,
+        conversationId = conversationId,
+        sender = UserDto(
+            userId = senderId,
+            name = userName ?: "Anonymous"
+        ),
+        text = text,
+        sentAt = Instant.parse(createdAt),
+        isMine = senderId == userId,
+    )
 }
 
 @Serializable

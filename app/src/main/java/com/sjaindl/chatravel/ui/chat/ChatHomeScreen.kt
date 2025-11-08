@@ -104,7 +104,7 @@ fun ChatHomeScreen(
             onConfirm = { interest ->
                 runCatching {
                     startConversation(selection.id, interest!!)
-                }.onSuccess { convo ->
+                }.onSuccess {
                     scope.launch {
                         snackbar.showSnackbar("Conversation started with ${selection.name}")
                     }
@@ -216,11 +216,11 @@ fun ChatHomeScreen(
                             .padding(padding),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
-                        items(conversations, key = { it.id }) { convo ->
+                        items(conversations, key = { it.id }) { conversation ->
                             ConversationRow(
-                                conversation = convo,
+                                conversation = conversation,
                                 onClick = {
-                                    onConversationClick(convo)
+                                    onConversationClick(conversation)
                                 }
                             )
                         }

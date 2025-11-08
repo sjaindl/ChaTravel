@@ -26,14 +26,18 @@ nav3Core = "1.0.0-rc01"
 kotlinSerialization = "2.2.21"
 koinVersion = "4.1.1"
 napierVersion = "2.7.1"
+roomCompiler = "2.8.3"
 viewModelComposeVersion = "2.9.6"
 play-services = "4.4.4"
+ksp = "2.3.2"
 
 [libraries]
 androidx-compose-material-icons-extended-android = { module = "androidx.compose.material:material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastorePreferences" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCompiler" }
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
@@ -83,3 +87,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
 graphQL = { id = "com.apollographql.apollo", version.ref = "apollo" }
 google-services = { id = "com.google.gms.google-services", version.ref = "play-services" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

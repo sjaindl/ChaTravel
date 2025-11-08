@@ -38,6 +38,7 @@ class WebSocketsMessagesApi(
 
     fun connect(
         userId: Long,
+        lastSync: String, // ISO-8601 instant
         onMessage: suspend (MessageDto) -> Unit,
         onConnected: suspend () -> Unit = {},
         onDisconnected: suspend (Throwable?) -> Unit = {},
@@ -56,6 +57,7 @@ class WebSocketsMessagesApi(
                         request = {
                             url.protocol = if (baseUrl.startsWith("wss")) URLProtocol.WSS else URLProtocol.WS
                             url.parameters.append("userId", userId.toString())
+                            url.parameters.append("lastSync", lastSync)
                            // url.parameters.append("conversationId", conversationId.toString()) // auto-subscribe
                         }
                     ) {
@@ -115,7 +117,9 @@ class WebSocketsMessagesApi(
 
     fun sendMessage(conversationId: Long, senderId: Long, text: String) {
         if (!sendMessageQueue.tryEmit(WsSendMessage(conversationId, senderId, text))) {
-            scope.launch { sendMessageQueue.emit(WsSendMessage(conversationId, senderId, text)) }
+            scope.launch {
+                sendMessageQueue.emit(WsSendMessage(conversationId, senderId, text))
+            }
         }
     }
 

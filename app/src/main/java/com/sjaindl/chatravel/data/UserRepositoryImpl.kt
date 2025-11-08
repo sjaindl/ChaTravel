@@ -15,7 +15,7 @@ class UserRepositoryImpl(
 
     override suspend fun addUser(userId: Long, name: String, interests: List<Interest>): UserDto {
         context.userDataStore.updateData {
-            it.copy(
+            UserDto(
                 userId = userId,
                 name = name,
                 interests = interests.map { it.name }

@@ -5,6 +5,7 @@ import com.mongodb.client.model.IndexOptions
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.eq
+import org.litote.kmongo.gt
 import org.litote.kmongo.or
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -33,7 +34,8 @@ class MessagesRepository(
             conversationId = id,
             firstUserId = firstUserId,
             secondUserId = secondUserId,
-            interest = interest
+            interest = interest,
+            lastMessageAt = Instant.now().toString(),
         )
         collection.insertOne(document = conversation)
 
@@ -64,12 +66,24 @@ class MessagesRepository(
         return message
     }
 
-    suspend fun getConversations(userId: Long): List<Conversation> {
+    suspend fun getConversations(userId: Long, sinceInstant: Instant?): List<Conversation> {
         val collection = createOrGetCollection<Conversation>(CONVERSATION_COLLECTION)
-        val result = collection.find(or(
-            Conversation::firstUserId eq userId,
-            Conversation::secondUserId eq userId)
-        ).toList()
+        val result = if (sinceInstant != null) {
+            collection.find(
+                or(
+                    Conversation::firstUserId eq userId,
+                    Conversation::secondUserId eq userId,
+                    Conversation::lastMessageAt gt sinceInstant.toString(),
+                )
+            )
+        } else {
+            collection.find(
+                or(
+                Conversation::firstUserId eq userId,
+                    Conversation::secondUserId eq userId,
+                )
+            )
+        }.toList()
 
         return result
     }
@@ -82,7 +96,7 @@ class MessagesRepository(
     }
 
     suspend fun countActiveConversationsForUserSince(userId: Long, since: Instant): Int {
-        val conversations = getConversations(userId = userId)
+        val conversations = getConversations(userId = userId, sinceInstant = null)
 
         return conversations.fold(0) { sum, conversation ->
             val messageCount = getMessages(conversationId = conversation.conversationId, since = since).size

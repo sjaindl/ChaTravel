@@ -45,7 +45,9 @@ fun ConversationRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             InitialsAvatar(name = title)
+
             Spacer(Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -70,7 +72,9 @@ fun ConversationRow(
                         }
                     }
                 }
+
                 Spacer(Modifier.height(4.dp))
+
                 Text(
                     text = preview,
                     style = MaterialTheme.typography.bodyMedium,
@@ -79,14 +83,21 @@ fun ConversationRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
             Spacer(Modifier.width(12.dp))
+
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = time,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(Modifier.height(6.dp))
+
+                Spacer(
+                    modifier = Modifier
+                        .height(6.dp)
+                )
+
                 UnreadBadge(conversation.unreadCount)
             }
         }

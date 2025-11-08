@@ -1,17 +1,21 @@
 package com.sjaindl.chatravel.di
 
+import androidx.room.Room
 import com.sjaindl.chatravel.data.FcmTokenApi
-import com.sjaindl.chatravel.data.polling.LongPoller
+import com.sjaindl.chatravel.data.MessageFetcher
 import com.sjaindl.chatravel.data.MessagesApi
 import com.sjaindl.chatravel.data.MessagesRepository
 import com.sjaindl.chatravel.data.MessagesRepositoryImpl
-import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.UserApi
 import com.sjaindl.chatravel.data.UserRepository
 import com.sjaindl.chatravel.data.UserRepositoryImpl
 import com.sjaindl.chatravel.data.fcm.TokenRepository
 import com.sjaindl.chatravel.data.fcm.TokenRepositoryImpl
+import com.sjaindl.chatravel.data.polling.LongPoller
+import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.prefs.UserSettingsRepository
+import com.sjaindl.chatravel.data.room.ChatTravelDatabase
+import com.sjaindl.chatravel.data.room.ChatTravelDatabase.Companion.DATABASE_NAME
 import com.sjaindl.chatravel.data.sse.InterestMatchSseClient
 import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.data.websocket.WebSocketsMessagesApi
@@ -31,7 +35,8 @@ import org.koin.dsl.module
 val appModule = module {
     single<MessagesRepository> {
         MessagesRepositoryImpl(
-            api = get()
+            api = get(),
+            database = get(),
         )
     }
 
@@ -113,6 +118,19 @@ val appModule = module {
             messagesRepository = get(),
             webSocketsMessagesApi = get(),
             scope = get(),
+            database = get(),
+        )
+    }
+
+    single<MessageFetcher> {
+        MessageFetcher(
+            database = get(),
+            shortPoller = get(),
+            longPoller = get(),
+            webSocketFetcher = get(),
+            userRepository = get(),
+            messagesRepository = get(),
+            settingsRepository = get()
         )
     }
 
@@ -133,5 +151,13 @@ val appModule = module {
 
     single<CoroutineScope> {
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    }
+
+    single<ChatTravelDatabase> {
+        Room.databaseBuilder(
+            context = get(),
+            klass = ChatTravelDatabase::class.java,
+            name = DATABASE_NAME,
+        ).build()
     }
 }

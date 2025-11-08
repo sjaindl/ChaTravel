@@ -4,7 +4,7 @@ import com.sjaindl.chatravelserver.sse.DiscoverableUserEvent
 import com.sjaindl.chatravelserver.sse.InterestMatchBus
 import io.ktor.http.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
+import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -93,8 +93,15 @@ fun Route.conversationRoutes(
                 call.respond(HttpStatusCode.BadRequest, "User ID missing or not a number")
                 return@get
             }
+            val since = call.request.queryParameters["sinceIsoInstant"]
 
-            val conversations = messagesRepository.getConversations(userId = userId)
+            val sinceInstant = try {
+                since?.let { Instant.parse(it) }
+            } catch (e: Exception) {
+                null
+            }
+
+            val conversations = messagesRepository.getConversations(userId = userId, sinceInstant = sinceInstant)
             call.respond(ConversationsResponse(conversations = conversations))
         }
 
@@ -116,14 +123,14 @@ fun Route.conversationRoutes(
                 return@post
             }
 
-            val conversation = with(body) {
+            val conversationId = with(body) {
                 messagesRepository.startConversation(
                     firstUserId = firstUserId,
                     secondUserId = secondUserId,
                     interestValue = interest,
                 )
             }
-            call.respond(HttpStatusCode.Created, conversation)
+            call.respond(HttpStatusCode.Created, conversationId)
         }
     }
 }
@@ -209,14 +216,14 @@ fun Route.messagesRoutes(
                 return@post
             }
 
-            messagesRepository.addMessage(
+            val message = messagesRepository.addMessage(
                 conversationId = body.conversationId,
                 senderId = body.senderId,
                 date = Instant.now(),
                 message = body.text,
             )
 
-            call.respond(HttpStatusCode.Created)
+            call.respond(status = HttpStatusCode.Created, message = message.messageId)
         }
     }
 }

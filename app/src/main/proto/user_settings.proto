@@ -7,4 +7,5 @@ option java_package = "com.sjaindl.chatravel.prefs.v1";
 
 message UserSettings {
   bool user_interest_notify = 1;
+  string last_sync = 2;
 }

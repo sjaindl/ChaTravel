@@ -6,16 +6,16 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class MessagesApi(private val client: HttpClient) {
 
-    suspend fun getConversations(userId: Long): ConversationsResponse {
+    suspend fun getConversations(userId: Long, sinceIsoInstant: String): ConversationsResponse {
         val resp: HttpResponse = client.get("/conversation") {
             url {
                 parameters.append("userId", userId.toString())
+                parameters.append("sinceIsoInstant", sinceIsoInstant)
             }
         }
         return resp.body()
@@ -53,12 +53,12 @@ class MessagesApi(private val client: HttpClient) {
         return resp.body()
     }
 
-    suspend fun createMessage(body: CreateMessageRequest): String {
+    suspend fun createMessage(body: CreateMessageRequest): Long {
         val resp: HttpResponse = client.post("/message") {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
 
-        return resp.bodyAsText()
+        return resp.body()
     }
 }

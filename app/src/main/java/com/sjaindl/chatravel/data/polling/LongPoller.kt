@@ -26,12 +26,12 @@ class LongPoller(
     private val _messageFlow = MutableStateFlow<List<MessageDto>>(emptyList())
     val messageFlow = _messageFlow.asStateFlow()
 
-    fun start(userId: Long) {
+    fun start(userId: Long, lastSync: String) {
         job?.cancel()
         job = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 runCatching {
-                    val conversations = messagesRepository.getConversations(userId = userId).conversations
+                    val conversations = messagesRepository.getConversations(userId = userId, sinceIsoInstant = lastSync).conversations
 
                     val iso = lastSeen?.toString()
 
@@ -40,7 +40,7 @@ class LongPoller(
                             conversations.flatMap { conversation ->
                                 buildList {
                                     add(
-                                        MessageDto.Companion.Initial.copy(
+                                        MessageDto.Initial.copy(
                                             conversationId = conversation.conversationId,
                                             senderId = conversation.secondUserId,
                                         )
@@ -84,7 +84,7 @@ class LongPoller(
 
                         is SocketTimeoutException -> {
                             // restart long polling after timeout
-                            start(userId = userId)
+                            start(userId = userId, lastSync = lastSync)
                         }
 
                         else -> {
