@@ -132,7 +132,12 @@ class ChatViewModel: ViewModel(), KoinComponent {
 
     fun fetchChats(userId: Long, lastSync: String, context: Context) {
         viewModelScope.launch {
-            messageFetcher.fetchChats(userId = userId, lastSync = lastSync, context = context) {
+            messageFetcher.fetchChats(
+                userId = userId,
+                lastSync = lastSync,
+                context = context,
+                messageNetworkType = BuildConfig.MESSAGE_NETWORK_TYPE,
+            ) {
                 _contentState.value = it
             }
         }

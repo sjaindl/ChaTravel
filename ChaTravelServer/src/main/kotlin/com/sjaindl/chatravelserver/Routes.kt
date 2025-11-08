@@ -45,12 +45,7 @@ fun Route.userRoutes(userRepository: UserRepository) {
         put {
             val body = call.receive<CreateOrUpdateUserRequest>()
 
-            val user = userRepository.updateUserInterests(userId = body.userId, interestValues = body.interests)
-
-            if (user == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "user not existing"))
-                return@put
-            }
+            val user = userRepository.updateUserInterests(userId = body.userId, userName = body.name, interestValues = body.interests)
 
             // Used to send events to users with same interest via SSE
             InterestMatchBus.emit(

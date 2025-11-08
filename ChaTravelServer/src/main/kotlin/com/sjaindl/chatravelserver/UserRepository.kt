@@ -42,8 +42,9 @@ class UserRepository(private val database: CoroutineDatabase) {
 
     suspend fun updateUserInterests(
         userId: Long,
+        userName: String,
         interestValues: List<String>,
-    ): User? {
+    ): User {
         val collection = createOrGetCollection<User>(USER_COLLECTION)
         val interests = interestValues.mapNotNull { value ->
             Interest.entries.find {
@@ -51,11 +52,13 @@ class UserRepository(private val database: CoroutineDatabase) {
             }
         }
 
-        val user = collection.findOne(User::userId.eq(userId))?.copy(interests = interests)
+        val user = collection.findOne(User::userId.eq(userId))?.copy(interests = interests) ?: registerUser(
+            userId = userId,
+            name = userName,
+            interestValues = interestValues,
+        )
 
-        user?.let {
-            collection.updateOne(User::userId.eq(userId), user)
-        }
+        collection.updateOne(User::userId.eq(userId), user)
 
         return user
     }

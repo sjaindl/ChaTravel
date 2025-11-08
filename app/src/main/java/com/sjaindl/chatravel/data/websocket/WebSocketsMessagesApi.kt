@@ -39,14 +39,15 @@ class WebSocketsMessagesApi(
     fun connect(
         userId: Long,
         lastSync: String, // ISO-8601 instant
+        onConnected: suspend () -> Unit,
         onMessage: suspend (MessageDto) -> Unit,
-        onConnected: suspend () -> Unit = {},
         onDisconnected: suspend (Throwable?) -> Unit = {},
     ) {
         if (sessionJob?.isActive == true) return
 
+        var attempt = 0
+
         sessionJob = scope.launch(Dispatchers.IO) {
-            var attempt = 0
             while (isActive) {
                 try {
                     client.webSocket(
@@ -62,7 +63,6 @@ class WebSocketsMessagesApi(
                         }
                     ) {
                         onConnected()
-                        attempt = 0
 
                         coroutineScope {
                             val writer = launch {
@@ -101,7 +101,10 @@ class WebSocketsMessagesApi(
                         }
                     }
                 } catch (t: Throwable) {
-                    onDisconnected(t)
+                    if (attempt >= 5) {
+                        onDisconnected(t)
+                    }
+
                     attempt++
                     val backoff = (1000L * attempt).coerceAtMost(10_000L)
                     delay(backoff)

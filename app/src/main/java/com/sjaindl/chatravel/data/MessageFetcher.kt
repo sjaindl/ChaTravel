@@ -39,11 +39,12 @@ class MessageFetcher(
         userId: Long,
         lastSync: String,
         context: Context,
+        messageNetworkType: String,
         onContentState: (ContentState) -> Unit,
     ) {
         fetchJob?.cancel()
 
-        when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+        when (messageNetworkType) {
             "SHORT_POLL" -> shortPoller.stop()
             "LONG_POLL" -> longPoller.stop()
             "WEBSOCKETS" -> webSocketFetcher.stop()
@@ -67,7 +68,7 @@ class MessageFetcher(
                 )
 
                 runCatching {
-                    val networkMessageFlow = when (BuildConfig.MESSAGE_NETWORK_TYPE) {
+                    val networkMessageFlow = when (messageNetworkType) {
                         "SHORT_POLL" -> {
                             shortPoller.start(userId = userId, lastSync = lastSync)
                             shortPoller.messageFlow
@@ -79,7 +80,22 @@ class MessageFetcher(
                         }
 
                         "WEBSOCKETS" -> {
-                            webSocketFetcher.start(userId = userId, lastSync = lastSync)
+                            webSocketFetcher.start(
+                                userId = userId,
+                                lastSync = lastSync,
+                                onDisconnected = {
+                                    Napier.e("Disconnected from websocket", it)
+
+                                    // switch to long polling when web socket connection is too flaky:
+                                    fetchChats(
+                                        userId = userId,
+                                        lastSync = lastSync,
+                                        context = context,
+                                        messageNetworkType = "LONG_POLL",
+                                        onContentState = onContentState,
+                                    )
+                                }
+                            )
                             webSocketFetcher.messageFlow
                         }
 

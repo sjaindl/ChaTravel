@@ -31,6 +31,7 @@ class WebSocketFetcher(
     fun start(
         userId: Long,
         lastSync: String, // ISO-8601 instant
+        onDisconnected: suspend (Throwable?) -> Unit,
     ) {
         job?.cancel()
 
@@ -73,7 +74,8 @@ class WebSocketFetcher(
                             )
                         )
                     }
-                }
+                },
+                onDisconnected = onDisconnected,
             )
         }
     }

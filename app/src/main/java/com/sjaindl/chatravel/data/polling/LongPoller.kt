@@ -66,7 +66,7 @@ class LongPoller(
                             }
                         )
                     } catch (throwable: Throwable) {
-                        Napier.e("Error during short polling", throwable)
+                        Napier.e("Error during long polling", throwable)
                         null
                     }
 
