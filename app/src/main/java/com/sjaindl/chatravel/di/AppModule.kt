@@ -44,6 +44,7 @@ val appModule = module {
         UserRepositoryImpl(
             context = androidApplication(),
             userApi = get(),
+            database = get(),
         )
     }
 
@@ -117,7 +118,6 @@ val appModule = module {
         WebSocketFetcher(
             messagesRepository = get(),
             webSocketsMessagesApi = get(),
-            scope = get(),
             database = get(),
         )
     }
@@ -138,6 +138,7 @@ val appModule = module {
         WebSocketsMessagesApi(
             client = get(),
             json = get(),
+            database = get(),
         )
     }
 

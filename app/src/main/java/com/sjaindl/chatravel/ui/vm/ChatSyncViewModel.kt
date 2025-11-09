@@ -20,7 +20,7 @@ class ChatSyncViewModel : ViewModel(), KoinComponent {
 
     val messages = client.messages.map {  messages ->
         messages.mapNotNull {
-            val user = userRepository.getUsers().users.firstOrNull { user ->
+            val user = userRepository.getUsers().firstOrNull { user ->
                 user.userId == it.senderId
             } ?: return@mapNotNull null
 

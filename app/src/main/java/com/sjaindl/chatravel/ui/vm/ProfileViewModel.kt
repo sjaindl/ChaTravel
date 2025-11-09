@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.net.ConnectException
 import kotlin.random.Random
 
 class ProfileViewModel: ViewModel(), KoinComponent {
@@ -74,12 +75,21 @@ class ProfileViewModel: ViewModel(), KoinComponent {
                 _userState.value = UserState.Content(user)
             }
         } catch (throwable: Throwable) {
-            _userState.value = UserState.Error(throwable)
+            if (throwable is ConnectException) {
+                val user = currentUser?.copy(interests = interests.map { it.name })
+                _userState.value = if (user != null) {
+                    UserState.Content(user)
+                } else {
+                    UserState.Error  (throwable)
+                }
+            } else {
+                _userState.value = UserState.Error(throwable)
+            }
         }
     }
 
     suspend fun loadUsers(interest: Interest): List<UserDto> {
-        return userRepository.getUsers(interest = interest).users.filter {
+        return userRepository.getUsers(interest = interest).filter {
             it.userId != userRepository.getCurrentUser()?.userId
         }
     }

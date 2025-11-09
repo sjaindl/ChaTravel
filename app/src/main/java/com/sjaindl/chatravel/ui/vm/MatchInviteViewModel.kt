@@ -39,7 +39,7 @@ class MatchInviteViewModel() : ViewModel(), KoinComponent {
             _uiState.value = MatchUiState.Loading
 
             val currentUser = userRepository.getCurrentUser()
-            val otherUser = userRepository.getUsers().users.firstOrNull {
+            val otherUser = userRepository.getUsers().firstOrNull {
                 it.userId == matchingUserId
             }
 

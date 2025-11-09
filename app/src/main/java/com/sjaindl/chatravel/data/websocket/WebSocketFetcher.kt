@@ -8,21 +8,20 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.collections.plus
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class WebSocketFetcher(
     private val messagesRepository: MessagesRepository,
     private val webSocketsMessagesApi: WebSocketsMessagesApi,
-    private val scope: CoroutineScope,
     private val database: ChatTravelDatabase,
 ) {
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var job: Job? = null
 
     private val _messageFlow = MutableStateFlow<List<MessageDto>>(emptyList())

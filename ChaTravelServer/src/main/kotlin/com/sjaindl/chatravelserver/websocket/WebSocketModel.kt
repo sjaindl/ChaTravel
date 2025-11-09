@@ -21,6 +21,7 @@ data class WsSendMessage(
     val conversationId: Long,
     val senderId: Long,
     val text: String,
+    val localId: Long,
     val type: String = "sendMessage",
 ) : WsEvent()
 
@@ -31,4 +32,4 @@ data class WsNewMessage(val message: Message, val type: String = "newMessage") :
 
 @Serializable
 @SerialName("ack")
-data class WsAck(val ok: Boolean, val messageId: Long? = null, val error: String? = null, val type: String = "ack") : WsEvent()
+data class WsAck(val ok: Boolean, val localId: Long?, val messageId: Long? = null, val error: String? = null, val type: String = "ack") : WsEvent()

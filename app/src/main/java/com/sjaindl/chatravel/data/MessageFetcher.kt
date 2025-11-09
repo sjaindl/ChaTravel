@@ -1,7 +1,6 @@
 package com.sjaindl.chatravel.data
 
 import android.content.Context
-import com.sjaindl.chatravel.BuildConfig
 import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.polling.ShortPoller
 import com.sjaindl.chatravel.data.prefs.UserSettingsRepository
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.net.ConnectException
 import java.time.Instant
 
 class MessageFetcher(
@@ -67,6 +67,12 @@ class MessageFetcher(
                     initialValue = emptyList(),
                 )
 
+                val pendingMessages = database.outboxDao().allMessages().stateIn(
+                    scope = this,
+                    started = SharingStarted.Eagerly,
+                    initialValue = emptyList(),
+                )
+
                 runCatching {
                     val networkMessageFlow = when (messageNetworkType) {
                         "SHORT_POLL" -> {
@@ -104,17 +110,23 @@ class MessageFetcher(
                         emit(emptyList())
                     }
 
-                    combine(localConversations, localMessages, networkMessageFlow) { localConversations, localMessages, networkMessages ->
-                        val newConversations = messagesRepository.getConversations(
-                            userId = userId,
-                            sinceIsoInstant = lastSync
-                        )
-
-                        val users = userRepository.getUsers().users
-
-                        val me = users.first { user ->
-                            user.userId == userId
+                    combine(localConversations, localMessages, networkMessageFlow, pendingMessages) { localConversations, localMessages, networkMessages, pendingMessages ->
+                        val newConversations = try {
+                            messagesRepository.getConversations(
+                                userId = userId,
+                                sinceIsoInstant = lastSync
+                            ).conversations
+                        } catch (exception: ConnectException) {
+                            emptyList()
                         }
+
+                        val users = try {
+                            userRepository.getUsers()
+                        } catch (exception: ConnectException) {
+                            emptyList()
+                        }
+
+                        val me = userRepository.getCurrentUser() ?: return@combine
 
                         val mapped = networkMessages.map {
                             val user = users.firstOrNull { user ->
@@ -136,12 +148,23 @@ class MessageFetcher(
                                     userName = user?.name,
                                 )
                             }
+                        ).plus(
+                            pendingMessages.map {
+                                val user = users.firstOrNull { user ->
+                                    user.userId == it.senderId
+                                }
+
+                                it.toMessage(
+                                    userId = user?.userId,
+                                    userName = user?.name,
+                                )
+                            }
                         ).groupBy { message ->
                             message.conversationId
                         }
 
                         val updatedConversations = mapped.map {
-                            val interest = newConversations.conversations.find { conversation ->
+                            val interest = newConversations.find { conversation ->
                                 it.key == conversation.conversationId
                             }?.interest ?: localConversations.find { conversation ->
                                 it.key == conversation.conversationId

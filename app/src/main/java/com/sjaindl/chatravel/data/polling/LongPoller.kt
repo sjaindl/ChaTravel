@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.ConnectException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -87,8 +88,12 @@ class LongPoller(
                             start(userId = userId, lastSync = lastSync)
                         }
 
+                        is ConnectException -> {
+                            _messageFlow.emit(emptyList())
+                        }
+
                         else -> {
-                            Napier.e("Error during short polling", it)
+                            Napier.e("Error during long polling", it)
                             throw it
                         }
                     }

@@ -41,3 +41,41 @@ data class MessageEntity(
         isMine = senderId == userId,
     )
 }
+
+@Entity(
+tableName = "user",
+indices = [Index("userId")]
+)
+data class UserEntity(
+    @PrimaryKey
+    val userId: Long,
+    val name: String,
+    val avatarUrl: String? = null,
+    val interests: List<String> = emptyList(),
+)
+
+@Entity(
+    tableName = "outbox_messages",
+    indices = [Index("id")]
+)
+data class OutboxMessageEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val conversationId: Long,
+    val senderId: Long,
+    val text: String,
+    val createdAtIso: String,
+    val attemptCount: Int = 0,
+) {
+    fun toMessage(userId: Long?, userName: String?) = Message(
+        id = id,
+        conversationId = conversationId,
+        sender = UserDto(
+            userId = senderId,
+            name = userName ?: "Anonymous"
+        ),
+        text = text,
+        sentAt = Instant.parse(createdAtIso),
+        isMine = senderId == userId,
+    )
+}

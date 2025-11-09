@@ -45,42 +45,47 @@ class ChatSyncClient(
         streamJob?.cancel()
 
         streamJob = scope.launch(Dispatchers.IO) {
-            val requests = flow {
-                emit(ChatClientEvent.newBuilder().setHello(
-                    ClientHello.newBuilder()
-                        .setConversationId(conversationId)
-                        .apply { if (lastSeenIso != null) setLastSeenMessageIso(lastSeenIso.toString()) }
-                ).build())
-            }.onCompletion {
-            /* keep stream alive after hello */
-            }.mergeWith(outgoing)
+            runCatching {
+                val requests = flow {
+                    emit(ChatClientEvent.newBuilder().setHello(
+                        ClientHello.newBuilder()
+                            .setConversationId(conversationId)
+                            .apply { if (lastSeenIso != null) setLastSeenMessageIso(lastSeenIso.toString()) }
+                    ).build())
+                }.onCompletion {
+                    /* keep stream alive after hello */
+                }.mergeWith(outgoing)
 
-            val responses: Flow<ChatServerEvent> = stub.chatStream(requests)
+                val responses: Flow<ChatServerEvent> = stub.chatStream(requests)
 
-            responses.collect { ev ->
-                when (ev.kindCase) {
-                    ChatServerEvent.KindCase.BACKFILL -> {
-                        val messages = ev.backfill.messagesList
-                        if (messages.isNotEmpty()) {
-                            _messages.update {
-                                (it + messages).distinctBy { message ->
-                                    message.messageId
-                                }.sortedBy { message ->
-                                    message.createdAtIso
+                responses.collect { ev ->
+                    when (ev.kindCase) {
+                        ChatServerEvent.KindCase.BACKFILL -> {
+                            val messages = ev.backfill.messagesList
+                            if (messages.isNotEmpty()) {
+                                _messages.update {
+                                    (it + messages).distinctBy { message ->
+                                        message.messageId
+                                    }.sortedBy { message ->
+                                        message.createdAtIso
+                                    }
                                 }
                             }
                         }
-                    }
-                    ChatServerEvent.KindCase.ACK -> {
-                        Napier.d("ACK: ${ev.ack.messageId}")
-                    }
-                    ChatServerEvent.KindCase.HEARTBEAT -> {
-                        Napier.d("HEARTBEAT: ${ev.heartbeat.serverTimeIso}")
-                    }
-                    ChatServerEvent.KindCase.KIND_NOT_SET -> {
-                        Napier.e("Unknown event: $ev")
+                        ChatServerEvent.KindCase.ACK -> {
+                            Napier.d("Ack: ${ev.ack.messageId}")
+                        }
+                        ChatServerEvent.KindCase.HEARTBEAT -> {
+                            Napier.d("Heartbeat: ${ev.heartbeat.serverTimeIso}")
+                        }
+                        ChatServerEvent.KindCase.KIND_NOT_SET -> {
+                            Napier.e("Unknown event: $ev")
+                        }
                     }
                 }
+            }.onFailure {
+                Napier.e("Stream error", it)
+                if (it is CancellationException) throw it
             }
         }
     }

@@ -6,6 +6,6 @@ interface UserRepository {
     suspend fun getCurrentUser(): UserDto?
     suspend fun addUser(userId: Long, name: String, interests: List<Interest>): UserDto
     suspend fun updateUser(userId: Long, name: String, interests: List<Interest>): UserDto
-    suspend fun getUsers(interest: Interest): UsersResponse
-    suspend fun getUsers(): UsersResponse
+    suspend fun getUsers(interest: Interest): List<UserDto>
+    suspend fun getUsers(): List<UserDto>
 }

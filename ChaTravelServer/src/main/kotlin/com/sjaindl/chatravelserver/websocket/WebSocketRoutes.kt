@@ -48,15 +48,20 @@ fun Route.websocketMessageRoutes(
                             val text = frame.readText()
                             when (val evt = json.decodeFromString<WsEvent>(text)) {
                                 is WsSubscribe -> {
-                                    conversationId?.let { removeSession(it, this) }
+                                    conversationId?.let { removeSession(conversationId = it, session = this) }
                                     conversationId = evt.conversationId
                                     addSession(evt.conversationId, this)
-                                    send(json.encodeToString(WsAck(ok = true)))
+                                    send(json.encodeToString(WsAck(ok = true, localId = null)))
                                 }
                                 is WsSendMessage -> {
                                     val ev = json.decodeFromString<WsSendMessage>(text)
                                     if (ev.text.isBlank()) {
-                                        send(json.encodeToString(WsAck(false, null, "text must not be blank")))
+                                        send(json.encodeToString(WsAck(
+                                            ok = false,
+                                            localId = ev.localId,
+                                            messageId = null,
+                                            error = "text must not be blank",
+                                        )))
                                     } else {
                                         val saved = messagesRepository.addMessage(
                                             conversationId = ev.conversationId,
@@ -65,11 +70,29 @@ fun Route.websocketMessageRoutes(
                                             message = ev.text,
                                         )
 
-                                        send(json.encodeToString(WsAck(true, saved.messageId, null)))
+                                        send(
+                                        json.encodeToString(
+                                        WsAck(
+                                                    ok = true,
+                                                    localId = evt.localId,
+                                                    messageId = saved.messageId,
+                                                    error = null
+                                                )
+                                            )
+                                        )
                                     }
                                 }
                                 else -> {
-                                    send(json.encodeToString(WsAck(false, null, "unsupported event: $evt")))
+                                    send(
+                                        json.encodeToString(
+                                            value = WsAck(
+                                            ok = false,
+                                            localId = null,
+                                            messageId = null,
+                                            error = "unsupported event: $evt"
+                                            )
+                                        )
+                                    )
                                 }
                             }
                         }

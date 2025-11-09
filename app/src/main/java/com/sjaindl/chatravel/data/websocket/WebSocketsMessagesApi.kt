@@ -2,6 +2,8 @@ package com.sjaindl.chatravel.data.websocket
 
 import androidx.core.net.toUri
 import com.sjaindl.chatravel.data.MessageDto
+import com.sjaindl.chatravel.data.room.ChatTravelDatabase
+import com.sjaindl.chatravel.data.room.OutboxMessageEntity
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -21,10 +23,12 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.time.Instant
 
 class WebSocketsMessagesApi(
     private val client: HttpClient,
     private val json: Json,
+    private val database: ChatTravelDatabase,
     private val baseUrl: String = "ws://10.0.2.2:8080",
 ) {
 
@@ -45,9 +49,8 @@ class WebSocketsMessagesApi(
     ) {
         if (sessionJob?.isActive == true) return
 
-        var attempt = 0
-
         sessionJob = scope.launch(Dispatchers.IO) {
+            var attempt = 0
             while (isActive) {
                 try {
                     client.webSocket(
@@ -59,17 +62,17 @@ class WebSocketsMessagesApi(
                             url.protocol = if (baseUrl.startsWith("wss")) URLProtocol.WSS else URLProtocol.WS
                             url.parameters.append("userId", userId.toString())
                             url.parameters.append("lastSync", lastSync)
-                           // url.parameters.append("conversationId", conversationId.toString()) // auto-subscribe
+                            // url.parameters.append("conversationId", conversationId.toString()) // auto-subscribe
                         }
                     ) {
+                        attempt = 0
+                        Napier.d("WebSocket connected")
                         onConnected()
+                        drainOutbox(this)
 
                         coroutineScope {
                             val writer = launch {
-                                // Collect queued sends and write them to the active session
                                 sendMessageQueue.collect { msg ->
-                                    // (Optional) subscribe once per conversation instead of every send:
-                                    // sendSerialized(WsSubscribe(conversationId = msg.conversationId))
                                     sendSerialized(WsSubscribe(conversationId = msg.conversationId))
                                     sendSerialized(msg)
                                 }
@@ -91,7 +94,6 @@ class WebSocketsMessagesApi(
                                 }
                             }
 
-                            // If either fails/finishes, cancel the other
                             try {
                                 joinAll(writer, reader)
                             } finally {
@@ -100,29 +102,39 @@ class WebSocketsMessagesApi(
                             }
                         }
                     }
-                } catch (t: Throwable) {
+                    // normal close, reconnect after short delay
+                    Napier.d("WebSocket normally closed, reconnecting...")
+                    onDisconnected(null)
+                    delay(1500)
+                } catch (t: Exception) {
+                    attempt++
+                    Napier.e("WebSocket connect failed, attempt: $attempt", t)
+
                     if (attempt >= 5) {
+                        Napier.e("WebSocket connect failed after 5 attempts, giving up.")
                         onDisconnected(t)
+                        break // give up
                     }
 
-                    attempt++
                     val backoff = (1000L * attempt).coerceAtMost(10_000L)
                     delay(backoff)
-                    continue
                 }
-
-                // normal close, reconnect after short delay
-                onDisconnected(null)
-                delay(1500)
             }
         }
     }
 
     fun sendMessage(conversationId: Long, senderId: Long, text: String) {
-        if (!sendMessageQueue.tryEmit(WsSendMessage(conversationId, senderId, text))) {
-            scope.launch {
-                sendMessageQueue.emit(WsSendMessage(conversationId, senderId, text))
-            }
+        scope.launch {
+            val localId = database.outboxDao().insert(
+                OutboxMessageEntity(
+                    conversationId = conversationId,
+                    senderId = senderId,
+                    text = text,
+                    createdAtIso = Instant.now().toString()
+                )
+            )
+
+            sendMessageQueue.emit(WsSendMessage(conversationId, senderId, text, localId))
         }
     }
 
@@ -131,11 +143,33 @@ class WebSocketsMessagesApi(
         sessionJob = null
     }
 
-    private fun handleAck(evt: WsAck) {
-        Napier.d("Web socket connection ACK: $evt")
+    private suspend fun drainOutbox(sess: DefaultClientWebSocketSession) {
+        val pending = database.outboxDao().allMessagesWithOldestFirst()
+        for (message in pending) {
+            try {
+                sess.sendSerialized(WsSubscribe(conversationId = message.conversationId))
+
+                sess.sendSerialized(WsSendMessage(
+                    conversationId = message.conversationId,
+                    senderId = message.senderId,
+                    text = message.text,
+                    localId = message.id
+                ))
+
+                database.outboxDao().incAttempt(message.id)
+            } catch (_: Throwable) {
+                break
+            }
+        }
     }
 
-    // Send serialized JSON over WS
+    private suspend fun handleAck(evt: WsAck) {
+        Napier.d("Web socket connection ACK: $evt")
+
+        val localId = evt.localId ?: return
+        database.outboxDao().delete(id = localId)
+    }
+
     private suspend inline fun <reified T> DefaultClientWebSocketSession.sendSerialized(payload: T) {
         val txt = json.encodeToString(payload)
         send(Frame.Text(txt))

@@ -28,15 +28,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.sjaindl.chatravel.ui.vm.ChatViewModel.ContentState
+import com.sjaindl.chatravel.R
 import com.sjaindl.chatravel.data.UserDto
 import com.sjaindl.chatravel.ui.ErrorScreen
 import com.sjaindl.chatravel.ui.LoadingScreen
 import com.sjaindl.chatravel.ui.chat.matches.TopMatchesBottomSheet
 import com.sjaindl.chatravel.ui.profile.Interest
 import com.sjaindl.chatravel.ui.theme.ChaTravelTheme
+import com.sjaindl.chatravel.ui.vm.ChatViewModel.ContentState
 import com.sjaindl.chatravel.ui.vm.TopMatchesViewModel
 import kotlinx.coroutines.launch
 
@@ -46,6 +48,7 @@ fun ChatHomeScreen(
     contentState: ContentState,
     topMatches: List<TopMatchesViewModel.TopMatch>,
     onConversationClick: (Conversation) -> Unit,
+    onReload: () -> Unit,
     modifier: Modifier = Modifier,
     title: String = "Chats",
     loadUsers: suspend (Interest) -> List<UserDto>,
@@ -229,7 +232,10 @@ fun ChatHomeScreen(
             }
 
             is ContentState.Error -> {
-                ErrorScreen()
+                ErrorScreen(
+                    text = contentState.throwable.message ?: stringResource(R.string.errorDescription),
+                    onButtonClick = onReload,
+                )
             }
             ContentState.Initial, ContentState.Loading -> {
                 LoadingScreen()
@@ -266,6 +272,7 @@ private fun PreviewHome() {
             contentState = ContentState.Content(sampleConversations()),
             topMatches = emptyList(),
             onConversationClick = { },
+            onReload = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },
             startConversation = { _, _ -> },
@@ -281,6 +288,7 @@ private fun PreviewHomeNoConversations() {
             contentState = ContentState.Content(emptyList()),
             topMatches = emptyList(),
             onConversationClick = { },
+            onReload = { },
             title = "Test chat",
             loadUsers = { _ -> emptyList() },
             startConversation = { _, _ -> },

@@ -158,7 +158,7 @@ fun NavContainer(matchId: Long?) {
                             }
                         }
 
-                        when (userState) {
+                        when (val state = userState) {
                             UserState.Initial, is UserState.Loading -> {
                                 LoadingScreen()
                             }
@@ -171,6 +171,15 @@ fun NavContainer(matchId: Long?) {
                                         backStack.add(
                                             NavScreen.ChatDetail(it)
                                         )
+                                    },
+                                    onReload = {
+                                        state.user?.let {
+                                            chatViewModel.fetchChats(
+                                                userId = it.userId,
+                                                lastSync = lastSync,
+                                                context = context,
+                                            )
+                                        }
                                     },
                                     loadUsers = profileViewModel::loadUsers,
                                     startConversation = { otherUserId, interest ->
