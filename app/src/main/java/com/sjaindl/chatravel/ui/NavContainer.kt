@@ -15,12 +15,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.sjaindl.chatravel.R
 import com.sjaindl.chatravel.ui.chat.ChatHomeScreen
 import com.sjaindl.chatravel.ui.chat.Conversation
 import com.sjaindl.chatravel.ui.chat.detail.ChatDetailScreen
@@ -30,6 +32,7 @@ import com.sjaindl.chatravel.ui.vm.ChatViewModel
 import com.sjaindl.chatravel.ui.vm.FcmViewModel
 import com.sjaindl.chatravel.ui.vm.InterestMatchViewModel
 import com.sjaindl.chatravel.ui.vm.ProfileViewModel
+import com.sjaindl.chatravel.ui.vm.ProfileViewModel.UserState
 import com.sjaindl.chatravel.ui.vm.TopMatchesViewModel
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
@@ -100,7 +103,7 @@ fun NavContainer(matchId: Long?) {
             snackbar.showSnackbar("New user with same interests: ${it.name}")
 
             // refetching top matches
-            (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
+            (userState as? UserState.Content)?.user?.let { user ->
                 topMatchesViewModel.start(userId = user.userId)
             }
         }
@@ -147,7 +150,7 @@ fun NavContainer(matchId: Long?) {
 
                     is NavScreen.ChatOverview -> NavEntry(key) {
                         LaunchedEffect(userState) {
-                            (userState as? ProfileViewModel.UserState.Content)?.user?.let { user ->
+                            (userState as? UserState.Content)?.user?.let { user ->
                                 chatViewModel.fetchChats(userId = user.userId, lastSync = lastSync, context = context)
                                 interestMatchViewModel.start(userId = user.userId)
                                 topMatchesViewModel.start(userId = user.userId)
@@ -155,38 +158,50 @@ fun NavContainer(matchId: Long?) {
                             }
                         }
 
-                        ChatHomeScreen(
-                            contentState = contentState,
-                            topMatches = topMatches,
-                            onConversationClick = {
-                                backStack.add(
-                                    NavScreen.ChatDetail(it)
-                                )
-                            },
-                            loadUsers = profileViewModel::loadUsers,
-                            startConversation = { otherUserId, interest ->
-                                chatViewModel.startConversation(
-                                    userId = otherUserId,
-                                    lastSync = lastSync,
-                                    interest = interest,
-                                    context = context,
-                                )
-                            },
-                            trailingContent = {
-                                IconButton(
-                                    onClick = {
+                        when (userState) {
+                            UserState.Initial, is UserState.Loading -> {
+                                LoadingScreen()
+                            }
+
+                            is UserState.Content -> {
+                                ChatHomeScreen(
+                                    contentState = contentState,
+                                    topMatches = topMatches,
+                                    onConversationClick = {
                                         backStack.add(
-                                            NavScreen.Profile
+                                            NavScreen.ChatDetail(it)
                                         )
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.SupervisedUserCircle,
-                                        contentDescription = "Profile",
-                                    )
-                                }
-                            },
-                        )
+                                    },
+                                    loadUsers = profileViewModel::loadUsers,
+                                    startConversation = { otherUserId, interest ->
+                                        chatViewModel.startConversation(
+                                            userId = otherUserId,
+                                            lastSync = lastSync,
+                                            interest = interest,
+                                            context = context,
+                                        )
+                                    },
+                                    trailingContent = {
+                                        IconButton(
+                                            onClick = {
+                                                backStack.add(
+                                                    NavScreen.Profile
+                                                )
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.SupervisedUserCircle,
+                                                contentDescription = "Profile",
+                                            )
+                                        }
+                                    },
+                                )
+                            }
+
+                            is UserState.Error -> {
+                                ErrorScreen(text = (userState as UserState.Error).throwable.message ?: stringResource(R.string.errorDescription),)
+                            }
+                        }
                     }
 
                     is NavScreen.ChatDetail -> NavEntry(key) {
