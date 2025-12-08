@@ -3,7 +3,6 @@ package com.sjaindl.chatravel.data
 import android.content.Context
 import com.sjaindl.chatravel.data.polling.LongPoller
 import com.sjaindl.chatravel.data.polling.ShortPoller
-import com.sjaindl.chatravel.data.prefs.UserSettingsRepository
 import com.sjaindl.chatravel.data.room.ChatTravelDatabase
 import com.sjaindl.chatravel.data.websocket.WebSocketFetcher
 import com.sjaindl.chatravel.ui.chat.Conversation
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.net.ConnectException
-import java.time.Instant
 
 class MessageFetcher(
     private val database: ChatTravelDatabase,
@@ -30,7 +28,6 @@ class MessageFetcher(
     private val webSocketFetcher: WebSocketFetcher,
     private val userRepository: UserRepository,
     private val messagesRepository: MessagesRepository,
-    private val settingsRepository: UserSettingsRepository,
 ) {
     private var fetchJob: Job? = null
 
@@ -62,12 +59,6 @@ class MessageFetcher(
                 )
 
                 val localMessages = database.messageDao().getAllMessages().stateIn(
-                    scope = this,
-                    started = SharingStarted.Eagerly,
-                    initialValue = emptyList(),
-                )
-
-                val pendingMessages = database.outboxDao().allMessages().stateIn(
                     scope = this,
                     started = SharingStarted.Eagerly,
                     initialValue = emptyList(),
@@ -110,19 +101,19 @@ class MessageFetcher(
                         emit(emptyList())
                     }
 
-                    combine(localConversations, localMessages, networkMessageFlow, pendingMessages) { localConversations, localMessages, networkMessages, pendingMessages ->
+                    combine(localConversations, localMessages, networkMessageFlow) { localConversations, localMessages, networkMessages ->
                         val newConversations = try {
                             messagesRepository.getConversations(
                                 userId = userId,
                                 sinceIsoInstant = lastSync
                             ).conversations
-                        } catch (exception: ConnectException) {
+                        } catch (_: ConnectException) {
                             emptyList()
                         }
 
                         val users = try {
                             userRepository.getUsers()
-                        } catch (exception: ConnectException) {
+                        } catch (_: ConnectException) {
                             emptyList()
                         }
 
@@ -139,17 +130,6 @@ class MessageFetcher(
                             )
                         }.plus(
                             localMessages.map {
-                                val user = users.firstOrNull { user ->
-                                    user.userId == it.senderId
-                                }
-
-                                it.toMessage(
-                                    userId = user?.userId,
-                                    userName = user?.name,
-                                )
-                            }
-                        ).plus(
-                            pendingMessages.map {
                                 val user = users.firstOrNull { user ->
                                     user.userId == it.senderId
                                 }
@@ -187,7 +167,6 @@ class MessageFetcher(
                             )
                         }
 
-                        settingsRepository.setLastSync(Instant.now().toString())
                         onContentState(ContentState.Content(updatedConversations))
                     }.collect()
                 }.onFailure {

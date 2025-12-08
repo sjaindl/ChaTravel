@@ -66,16 +66,4 @@ data class OutboxMessageEntity(
     val text: String,
     val createdAtIso: String,
     val attemptCount: Int = 0,
-) {
-    fun toMessage(userId: Long?, userName: String?) = Message(
-        id = id,
-        conversationId = conversationId,
-        sender = UserDto(
-            userId = senderId,
-            name = userName ?: "Anonymous"
-        ),
-        text = text,
-        sentAt = Instant.parse(createdAtIso),
-        isMine = senderId == userId,
-    )
-}
+)

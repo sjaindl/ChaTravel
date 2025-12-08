@@ -5,7 +5,6 @@ option java_multiple_files = true;
 option java_outer_classname = "ChatServiceProto";
 option java_package = "com.chatravel.grpc.v1";
 
-// Domain
 message Message {
   uint64 message_id = 1;
   uint64 conversation_id = 2;

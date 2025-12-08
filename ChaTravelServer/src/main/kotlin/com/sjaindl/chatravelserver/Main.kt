@@ -161,7 +161,7 @@ fun startGrpc(
     val server = ServerBuilder
         .forPort(port)
         .addService(ChatService(messagesRepository = messagesRepository))
-        .addService(ProtoReflectionService.newInstance()) // so grpcurl works
+        .addService(ProtoReflectionService.newInstance())
         .build()
         .start()
 

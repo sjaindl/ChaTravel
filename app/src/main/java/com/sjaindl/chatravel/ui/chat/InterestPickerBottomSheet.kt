@@ -98,8 +98,15 @@ fun InterestPickerBottomSheet(
             }
 
             Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(modifier = Modifier.weight(1f), onClick = onDismiss) { Text("Cancel") }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = onDismiss) {
+                    Text("Cancel")
+                }
+
                 Button(modifier = Modifier.weight(1f), onClick = { onConfirm(selected) }) {
                     Text("Confirm")
                 }

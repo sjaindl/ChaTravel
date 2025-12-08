@@ -143,13 +143,13 @@ class WebSocketsMessagesApi(
         sessionJob = null
     }
 
-    private suspend fun drainOutbox(sess: DefaultClientWebSocketSession) {
+    private suspend fun drainOutbox(webSocketSession: DefaultClientWebSocketSession) {
         val pending = database.outboxDao().allMessagesWithOldestFirst()
         for (message in pending) {
             try {
-                sess.sendSerialized(WsSubscribe(conversationId = message.conversationId))
+                webSocketSession.sendSerialized(WsSubscribe(conversationId = message.conversationId))
 
-                sess.sendSerialized(WsSendMessage(
+                webSocketSession.sendSerialized(WsSendMessage(
                     conversationId = message.conversationId,
                     senderId = message.senderId,
                     text = message.text,

@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
      * @param level the memory-related event that is raised.
      */
     override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
 
         if (level >= TRIM_MEMORY_UI_HIDDEN) {
             // Release memory related to UI elements, such as bitmap caches.
