@@ -130,7 +130,6 @@ val appModule = module {
             webSocketFetcher = get(),
             userRepository = get(),
             messagesRepository = get(),
-            settingsRepository = get()
         )
     }
 
